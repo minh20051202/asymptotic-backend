@@ -1,7 +1,22 @@
 package main
 
-import "github.com/minh20051202/ticket-system-backend/internal/database"
+import (
+	"log"
+
+	"github.com/minh20051202/ticket-system-backend/internal/database"
+	"github.com/minh20051202/ticket-system-backend/internal/server"
+)
 
 func main() {
-	database.New()
+	db, err := database.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := db.Init(); err != nil {
+		log.Fatal(err)
+	}
+
+	server := server.NewAPIServer(":8080", db)
+	server.Run()
 }
