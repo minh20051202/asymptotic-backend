@@ -16,6 +16,14 @@ type Storage interface {
 	UpdateUser(*User) error
 	GetAllUsers() ([]*User, error)
 	GetUserById(uuid.UUID) (*User, error)
+
+	CreateEvent(*Event) error
+	DeleteEventById(uuid.UUID) error
+	UpdateEvent(*Event) error
+	GetAllEvents() ([]*Event, error)
+	GetEventById(uuid.UUID) (*Event, error)
+
+	CreateOrder(*Order) error
 }
 
 type PostgresStore struct {
@@ -75,6 +83,7 @@ func (ps *PostgresStore) createUserTable() error {
 func (ps *PostgresStore) createEventTable() error {
 	query := `CREATE TABLE IF NOT EXISTS events (
 		event_id UUID DEFAULT gen_random_uuid(),
+		event_name VARCHAR(255) NOT NULL,
 		total_quota INT NOT NULL,
 		available_qty INT NOT NULL CHECK(available_qty >= 0),
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -159,12 +168,7 @@ func (ps *PostgresStore) GetAllUsers() ([]*User, error) {
 
 	users := []*User{}
 	for rows.Next() {
-		user := new(User)
-		err := rows.Scan(
-			&user.UserID,
-			&user.Username,
-			&user.Password,
-			&user.CreatedAt)
+		user, err := scanIntoUsers(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -174,9 +178,144 @@ func (ps *PostgresStore) GetAllUsers() ([]*User, error) {
 	return users, nil
 }
 func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*User, error) {
-	return nil, nil
+	rows, err := ps.db.Query("SELECT * FROM users WHERE user_id = $1", uuid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		return scanIntoUsers(rows)
+	}
+
+	return nil, fmt.Errorf("User %d not found", uuid)
 }
 
 func (ps *PostgresStore) DeleteUserById(uuid uuid.UUID) error {
 	return nil
+}
+
+func scanIntoUsers(rows *sql.Rows) (*User, error) {
+	user := new(User)
+	err := rows.Scan(
+		&user.UserID,
+		&user.Username,
+		&user.Password,
+		&user.CreatedAt)
+	return user, err
+}
+
+func (ps *PostgresStore) CreateEvent(event *Event) error {
+	query := `INSERT INTO events
+	(event_id,event_name, total_quota, available_qty, created_at)
+	values($1, $2, $3, $4, $5)`
+
+	_, err := ps.db.Query(
+		query,
+		event.EventID,
+		event.EventName,
+		event.TotalQuota,
+		event.AvailableQty,
+		event.CreatedAt,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (ps *PostgresStore) GetAllEvents() ([]*Event, error) {
+	rows, err := ps.db.Query("SELECT * FROM events")
+
+	if err != nil {
+		return nil, err
+	}
+
+	events := []*Event{}
+	for rows.Next() {
+		event, err := scanIntoEvents(rows)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+func (ps *PostgresStore) GetEventById(uuid uuid.UUID) (*Event, error) {
+	rows, err := ps.db.Query("SELECT * FROM events WHERE event_id = $1", uuid)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		return scanIntoEvents(rows)
+	}
+
+	return nil, fmt.Errorf("Event %d not found", uuid)
+}
+
+func (ps *PostgresStore) UpdateEvent(event *Event) error {
+	return nil
+}
+
+func (ps *PostgresStore) DeleteEventById(uuid uuid.UUID) error {
+	return nil
+}
+
+func scanIntoEvents(rows *sql.Rows) (*Event, error) {
+	event := new(Event)
+	err := rows.Scan(
+		&event.EventID,
+		&event.EventName,
+		&event.TotalQuota,
+		&event.AvailableQty,
+		&event.CreatedAt)
+	return event, err
+}
+
+func (ps *PostgresStore) CreateOrder(order *Order) error {
+	tx, err := ps.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	queryEvent := `
+        UPDATE events 
+        SET available_qty = available_qty - $1 
+        WHERE event_id = $2
+    `
+	_, err = tx.Exec(queryEvent, order.Amount, order.EventID)
+	if err != nil {
+		return err
+	}
+
+	queryOrder := `
+		INSERT INTO orders (order_id, event_id, user_id, amount, created_at)
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	_, err = tx.Exec(queryOrder, order.OrderID, order.EventID, order.UserID, order.Amount, order.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	queryTicket := `
+        INSERT INTO tickets (ticket_id, order_id, user_id) 
+        VALUES ($1, $2, $3)
+    `
+	for range order.Amount {
+		ticketID := uuid.New()
+		_, err = tx.Exec(queryTicket, ticketID, order.OrderID, order.UserID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
