@@ -2,28 +2,34 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
+	"github.com/minh20051202/ticket-system-backend/internal/models"
 )
 
+var ErrInsufficientFunds = errors.New("insufficient funds")
+
 type Storage interface {
-	CreateUser(*User) error
+	CreateUser(*models.User) error
 	DeleteUserById(uuid.UUID) error
-	UpdateUser(*User) error
-	GetAllUsers() ([]*User, error)
-	GetUserById(uuid.UUID) (*User, error)
+	UpdateUser(*models.User) error
+	GetAllUsers() ([]*models.User, error)
+	GetUserById(uuid.UUID) (*models.User, error)
 
-	CreateEvent(*Event) error
-	DeleteEventById(uuid.UUID) error
-	UpdateEvent(*Event) error
-	GetAllEvents() ([]*Event, error)
-	GetEventById(uuid.UUID) (*Event, error)
+	CreateWallet(*models.Wallet) error
+	DeleteWalletById(uuid.UUID) error
+	UpdateWallet(*models.Wallet) error
+	GetAllWallets() ([]*models.Wallet, error)
+	GetWalletById(uuid.UUID) (*models.Wallet, error)
 
-	CreateOrder(*Order) error
+	CreateTransaction(*models.Transaction) error
+	GetAllTransactions() ([]*models.Transaction, error)
 }
 
 type PostgresStore struct {
@@ -48,6 +54,11 @@ func New() (*PostgresStore, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(time.Hour)
+	db.SetConnMaxIdleTime(5 * time.Minute)
+
 	return &PostgresStore{
 		db: db,
 	}, nil
@@ -57,94 +68,79 @@ func (ps *PostgresStore) Init() error {
 	if err := ps.createUserTable(); err != nil {
 		return err
 	}
-	if err := ps.createEventTable(); err != nil {
+	if err := ps.createWalletTable(); err != nil {
 		return err
 	}
-	if err := ps.createOrderTable(); err != nil {
-		return err
-	}
-	if err := ps.createTicketTable(); err != nil {
+	if err := ps.createTransactionTable(); err != nil {
 		return err
 	}
 	return nil
 }
+
+func (ps *PostgresStore) Close() error {
+	return ps.db.Close()
+}
+
 func (ps *PostgresStore) createUserTable() error {
 	query := `CREATE TABLE IF NOT EXISTS users (
-		user_id UUID DEFAULT gen_random_uuid(),
-		username VARCHAR(50) UNIQUE NOT NULL,
-		password VARCHAR(255) NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		PRIMARY KEY (user_id)
-	)`
+        user_id UUID PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
 	_, err := ps.db.Exec(query)
 	return err
 }
 
-func (ps *PostgresStore) createEventTable() error {
-	query := `CREATE TABLE IF NOT EXISTS events (
-		event_id UUID DEFAULT gen_random_uuid(),
-		event_name VARCHAR(255) NOT NULL,
-		total_quota INT NOT NULL,
-		available_qty INT NOT NULL CHECK(available_qty >= 0),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		PRIMARY KEY (event_id)
-	)`
-	_, err := ps.db.Exec(query)
-	return err
-}
-func (ps *PostgresStore) createOrderTable() error {
-	query := `CREATE TABLE IF NOT EXISTS orders (
-		order_id UUID DEFAULT gen_random_uuid(),
-		event_id UUID,
-		user_id UUID,
-		amount SMALLINT NOT NULL CHECK(amount > 0),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-		PRIMARY KEY(order_id),
-		CONSTRAINT fk_order_event
-			FOREIGN KEY (event_id)
-				REFERENCES events(event_id)
-					ON DELETE RESTRICT,
-		CONSTRAINT fk_order_user
-			FOREIGN KEY (user_id)
-				REFERENCES users(user_id)
-					ON DELETE RESTRICT
-					
-	)`
+func (ps *PostgresStore) createWalletTable() error {
+	query := `CREATE TABLE IF NOT EXISTS wallets (
+        wallet_id UUID PRIMARY KEY,
+        user_id UUID NOT NULL,
+        balance BIGINT DEFAULT 0 CHECK(balance >= 0),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_wallet_user
+            FOREIGN KEY (user_id)
+                REFERENCES users(user_id)
+                    ON DELETE RESTRICT
+    )`
 	_, err := ps.db.Exec(query)
 	return err
 }
 
-func (ps *PostgresStore) createTicketTable() error {
-	query := `CREATE TABLE IF NOT EXISTS tickets (
-		ticket_id UUID DEFAULT gen_random_uuid(),
-		user_id UUID,
-		order_id UUID,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		PRIMARY KEY(ticket_id),
+func (ps *PostgresStore) createTransactionTable() error {
+	query := `CREATE TABLE IF NOT EXISTS transactions (
+        transaction_id UUID PRIMARY KEY,
+        wallet_id UUID NOT NULL,
+        user_id UUID NOT NULL,
+        idempotency_key VARCHAR(255) UNIQUE NOT NULL,
+        amount BIGINT NOT NULL,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'FAILED', 'SUCCEEDED')) DEFAULT 'PENDING', 
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-		CONSTRAINT fk_ticket_user
-			FOREIGN KEY (user_id)
-				REFERENCES users(user_id)
-					ON DELETE RESTRICT,
-		CONSTRAINT fk_ticket_order
-			FOREIGN KEY (order_id)
-				REFERENCES orders(order_id)
-					ON DELETE RESTRICT
-	)`
+        CONSTRAINT fk_transaction_wallet
+            FOREIGN KEY (wallet_id)
+                REFERENCES wallets(wallet_id)
+                    ON DELETE RESTRICT,
+        CONSTRAINT fk_transaction_user
+            FOREIGN KEY (user_id)
+                REFERENCES users(user_id)
+                    ON DELETE RESTRICT
+    )`
 	_, err := ps.db.Exec(query)
 	return err
 }
 
-func (ps *PostgresStore) CreateUser(user *User) error {
+func (ps *PostgresStore) CreateUser(user *models.User) error {
 	query := `INSERT INTO users
-	(user_id, username, password, created_at)
-	values($1, $2, $3, $4)`
+	(user_id, username, email, password, created_at)
+	values($1, $2, $3, $4, $5)`
 
-	_, err := ps.db.Query(
+	_, err := ps.db.Exec(
 		query,
 		user.UserID,
 		user.Username,
+		user.Email,
 		user.Password,
 		user.CreatedAt,
 	)
@@ -156,17 +152,19 @@ func (ps *PostgresStore) CreateUser(user *User) error {
 	return nil
 }
 
-func (ps *PostgresStore) UpdateUser(user *User) error {
+func (ps *PostgresStore) UpdateUser(user *models.User) error {
 	return nil
 }
-func (ps *PostgresStore) GetAllUsers() ([]*User, error) {
+
+func (ps *PostgresStore) GetAllUsers() ([]*models.User, error) {
 	rows, err := ps.db.Query("SELECT * FROM users")
 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	users := []*User{}
+	users := []*models.User{}
 	for rows.Next() {
 		user, err := scanIntoUsers(rows)
 		if err != nil {
@@ -177,12 +175,14 @@ func (ps *PostgresStore) GetAllUsers() ([]*User, error) {
 
 	return users, nil
 }
-func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*User, error) {
+
+func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*models.User, error) {
 	rows, err := ps.db.Query("SELECT * FROM users WHERE user_id = $1", uuid)
 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		return scanIntoUsers(rows)
@@ -192,31 +192,38 @@ func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*User, error) {
 }
 
 func (ps *PostgresStore) DeleteUserById(uuid uuid.UUID) error {
+	_, err := ps.db.Exec("DELETE FROM users WHERE user_id = $1", uuid)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func scanIntoUsers(rows *sql.Rows) (*User, error) {
-	user := new(User)
+func scanIntoUsers(rows *sql.Rows) (*models.User, error) {
+	user := new(models.User)
 	err := rows.Scan(
 		&user.UserID,
 		&user.Username,
+		&user.Email,
 		&user.Password,
-		&user.CreatedAt)
+		&user.CreatedAt,
+	)
 	return user, err
 }
 
-func (ps *PostgresStore) CreateEvent(event *Event) error {
-	query := `INSERT INTO events
-	(event_id,event_name, total_quota, available_qty, created_at)
-	values($1, $2, $3, $4, $5)`
+func (ps *PostgresStore) CreateWallet(wallet *models.Wallet) error {
+	query := `INSERT INTO wallets
+	(wallet_id, user_id, balance, created_at)
+	values($1, $2, $3, $4)`
 
-	_, err := ps.db.Query(
+	_, err := ps.db.Exec(
 		query,
-		event.EventID,
-		event.EventName,
-		event.TotalQuota,
-		event.AvailableQty,
-		event.CreatedAt,
+		wallet.WalletID,
+		wallet.UserId,
+		wallet.Balance,
+		wallet.CreatedAt,
 	)
 
 	if err != nil {
@@ -226,96 +233,150 @@ func (ps *PostgresStore) CreateEvent(event *Event) error {
 	return nil
 }
 
-func (ps *PostgresStore) GetAllEvents() ([]*Event, error) {
-	rows, err := ps.db.Query("SELECT * FROM events")
+func (ps *PostgresStore) GetAllWallets() ([]*models.Wallet, error) {
+	rows, err := ps.db.Query("SELECT * FROM wallets")
 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	events := []*Event{}
+	wallets := []*models.Wallet{}
 	for rows.Next() {
-		event, err := scanIntoEvents(rows)
+		wallet, err := scanIntoWallets(rows)
 		if err != nil {
 			return nil, err
 		}
-		events = append(events, event)
+		wallets = append(wallets, wallet)
 	}
 
-	return events, nil
+	return wallets, nil
 }
-func (ps *PostgresStore) GetEventById(uuid uuid.UUID) (*Event, error) {
-	rows, err := ps.db.Query("SELECT * FROM events WHERE event_id = $1", uuid)
+func (ps *PostgresStore) GetWalletById(uuid uuid.UUID) (*models.Wallet, error) {
+	rows, err := ps.db.Query("SELECT * FROM wallets WHERE wallet_id = $1", uuid)
 
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
-		return scanIntoEvents(rows)
+		return scanIntoWallets(rows)
 	}
 
-	return nil, fmt.Errorf("Event %d not found", uuid)
+	return nil, fmt.Errorf("Wallet %d not found", uuid)
 }
 
-func (ps *PostgresStore) UpdateEvent(event *Event) error {
+func (ps *PostgresStore) UpdateWallet(wallet *models.Wallet) error {
 	return nil
 }
 
-func (ps *PostgresStore) DeleteEventById(uuid uuid.UUID) error {
+func (ps *PostgresStore) DeleteWalletById(uuid uuid.UUID) error {
 	return nil
 }
 
-func scanIntoEvents(rows *sql.Rows) (*Event, error) {
-	event := new(Event)
+func scanIntoWallets(rows *sql.Rows) (*models.Wallet, error) {
+	wallet := new(models.Wallet)
 	err := rows.Scan(
-		&event.EventID,
-		&event.EventName,
-		&event.TotalQuota,
-		&event.AvailableQty,
-		&event.CreatedAt)
-	return event, err
+		&wallet.WalletID,
+		&wallet.UserId,
+		&wallet.Balance,
+		&wallet.CreatedAt,
+	)
+	return wallet, err
 }
 
-func (ps *PostgresStore) CreateOrder(order *Order) error {
+func (ps *PostgresStore) Charge(transaction *models.Transaction) (*models.Transaction, error) {
 	tx, err := ps.db.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer tx.Rollback()
 
-	queryEvent := `
-        UPDATE events 
-        SET available_qty = available_qty - $1 
-        WHERE event_id = $2
-    `
-	_, err = tx.Exec(queryEvent, order.Amount, order.EventID)
-	if err != nil {
-		return err
-	}
-
-	queryOrder := `
-		INSERT INTO orders (order_id, event_id, user_id, amount, created_at)
-		VALUES ($1, $2, $3, $4, $5)
+	queryTransaction := `
+		INSERT INTO transactions (transaction_id, wallet_id, user_id, idempotency_key, amount, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (idempotency_key) DO NOTHING
 	`
 
-	_, err = tx.Exec(queryOrder, order.OrderID, order.EventID, order.UserID, order.Amount, order.CreatedAt)
+	result, err := tx.Exec(queryTransaction, transaction.TransactionID, transaction.WalletID, transaction.UserID, transaction.IdempotencyKey, transaction.Amount, transaction.CreatedAt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	queryTicket := `
-        INSERT INTO tickets (ticket_id, order_id, user_id) 
-        VALUES ($1, $2, $3)
-    `
-	for range order.Amount {
-		ticketID := uuid.New()
-		_, err = tx.Exec(queryTicket, ticketID, order.OrderID, order.UserID)
+	rowAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rowAffected == 0 {
+		oldTransaction := &models.Transaction{}
+		queryRead := `SELECT transaction_id, wallet_id, user_id, idempotency_key, amount, status, created_at FROM transactions WHERE idempotency_key = $1`
+		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionID, &oldTransaction.WalletID, &oldTransaction.UserID, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Status, &oldTransaction.CreatedAt)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		return oldTransaction, nil
 	}
 
-	return tx.Commit()
+	var balance int64
+	queryRead := `SELECT balance FROM wallets WHERE wallet_id = $1 FOR UPDATE`
+
+	err = tx.QueryRow(queryRead, transaction.WalletID).Scan(&balance)
+	if err != nil {
+		return nil, err
+	}
+
+	if balance < int64(transaction.Amount) {
+		return nil, ErrInsufficientFunds
+	}
+
+	newBalance := balance - int64(transaction.Amount)
+
+	queryUpdate := `
+        UPDATE wallets 
+        SET balance = $1
+        WHERE wallet_id = $2
+    `
+	_, err = tx.Exec(queryUpdate, newBalance, transaction.WalletID)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction.Status = "PENDING"
+
+	return transaction, tx.Commit()
+}
+
+func (ps *PostgresStore) GetAllTransactions() ([]*models.Transaction, error) {
+	rows, err := ps.db.Query("SELECT * FROM transactions")
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	transactions := []*models.Transaction{}
+	for rows.Next() {
+		transaction, err := scanIntoTransactions(rows)
+		if err != nil {
+			return nil, err
+		}
+		transactions = append(transactions, transaction)
+	}
+
+	return transactions, nil
+}
+
+func scanIntoTransactions(rows *sql.Rows) (*models.Transaction, error) {
+	transaction := new(models.Transaction)
+	err := rows.Scan(
+		&transaction.TransactionID,
+		&transaction.WalletID,
+		&transaction.UserID,
+		&transaction.IdempotencyKey,
+		&transaction.Amount,
+		&transaction.Status,
+		&transaction.CreatedAt)
+	return transaction, err
 }
