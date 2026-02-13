@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	db "github.com/minh20051202/ticket-system-backend/internal/database"
-	"github.com/minh20051202/ticket-system-backend/internal/models"
+	"github.com/minh20051202/ticket-system-backend/internal/shared"
 )
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
@@ -99,7 +99,7 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 
 	defer r.Body.Close()
 
-	newUser := &models.User{
+	newUser := &shared.User{
 		UserID:    uuid.New(),
 		Username:  createUserReq.Username,
 		Password:  createUserReq.Password,
@@ -202,12 +202,10 @@ func (s *APIServer) handleCreateWallet(w http.ResponseWriter, r *http.Request) e
 
 	defer r.Body.Close()
 
-	newWallet := &models.Wallet{
-		WalletID:     uuid.New(),
-		WalletName:   createWalletReq.WalletName,
-		TotalQuota:   createWalletReq.TotalQuota,
-		AvailableQty: createWalletReq.AvailableQty,
-		CreatedAt:    time.Now().UTC(),
+	newWallet := &shared.Wallet{
+		WalletID:  uuid.New(),
+		UserId:    createWalletReq.UserId,
+		CreatedAt: time.Now().UTC(),
 	}
 
 	err := s.storage.CreateWallet(newWallet)
@@ -244,17 +242,18 @@ func (s *APIServer) handleCreateTransaction(w http.ResponseWriter, r *http.Reque
 
 	defer r.Body.Close()
 
-	newTransaction := &models.Transaction{
-		TransactionID: uuid.New(),
-		WalletID:      createTransactionRequest.WalletID,
-		UserID:        createTransactionRequest.UserID,
-		Amount:        createTransactionRequest.Amount,
-		CreatedAt:     time.Now().UTC(),
+	newTransaction := &shared.Transaction{
+		TransactionID:  uuid.New(),
+		WalletID:       createTransactionRequest.WalletID,
+		UserID:         createTransactionRequest.UserID,
+		IdempotencyKey: createTransactionRequest.IdempotencyKey,
+		Amount:         createTransactionRequest.Amount,
+		CreatedAt:      time.Now().UTC(),
 	}
 	for range maxRetries {
-		err = s.storage.CreateTransactionPessimistic(newTransaction)
+		tx, err := s.storage.Charge(newTransaction)
 		if err == nil {
-			return WriteJSON(w, http.StatusOK, newTransaction)
+			return WriteJSON(w, http.StatusOK, tx)
 		}
 		if !strings.Contains(err.Error(), "conflict") {
 			break
@@ -264,8 +263,8 @@ func (s *APIServer) handleCreateTransaction(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err != nil {
-		if strings.Contains(err.Error(), "sold out") {
-			return WriteJSON(w, http.StatusConflict, ApiError{Error: "sold out"})
+		if strings.Contains(err.Error(), "insufficient funds") {
+			return WriteJSON(w, http.StatusConflict, ApiError{Error: "insufficient funds"})
 		} else if strings.Contains(err.Error(), "conflict") {
 			return WriteJSON(w, http.StatusServiceUnavailable, ApiError{Error: "system busy, please try again"})
 		}

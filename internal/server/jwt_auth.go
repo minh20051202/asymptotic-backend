@@ -7,12 +7,12 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/minh20051202/ticket-system-backend/internal/models"
+	"github.com/minh20051202/ticket-system-backend/internal/shared"
 )
 
 var jwtSecretKey = os.Getenv("JWT_SECRET_KEY")
 
-func createJWT(user *models.User) (string, error) {
+func createJWT(user *shared.User) (string, error) {
 	claims := &jwt.MapClaims{
 		"expiresAt": 15000,
 		"userId":    user.UserID,

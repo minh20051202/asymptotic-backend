@@ -10,26 +10,26 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 	_ "github.com/lib/pq"
-	"github.com/minh20051202/ticket-system-backend/internal/models"
+	"github.com/minh20051202/ticket-system-backend/internal/shared"
 )
 
 var ErrInsufficientFunds = errors.New("insufficient funds")
 
 type Storage interface {
-	CreateUser(*models.User) error
+	CreateUser(*shared.User) error
 	DeleteUserById(uuid.UUID) error
-	UpdateUser(*models.User) error
-	GetAllUsers() ([]*models.User, error)
-	GetUserById(uuid.UUID) (*models.User, error)
+	UpdateUser(*shared.User) error
+	GetAllUsers() ([]*shared.User, error)
+	GetUserById(uuid.UUID) (*shared.User, error)
 
-	CreateWallet(*models.Wallet) error
+	CreateWallet(*shared.Wallet) error
 	DeleteWalletById(uuid.UUID) error
-	UpdateWallet(*models.Wallet) error
-	GetAllWallets() ([]*models.Wallet, error)
-	GetWalletById(uuid.UUID) (*models.Wallet, error)
+	UpdateWallet(*shared.Wallet) error
+	GetAllWallets() ([]*shared.Wallet, error)
+	GetWalletById(uuid.UUID) (*shared.Wallet, error)
 
-	CreateTransaction(*models.Transaction) error
-	GetAllTransactions() ([]*models.Transaction, error)
+	Charge(*shared.Transaction) (*shared.Transaction, error)
+	GetAllTransactions() ([]*shared.Transaction, error)
 }
 
 type PostgresStore struct {
@@ -131,7 +131,7 @@ func (ps *PostgresStore) createTransactionTable() error {
 	return err
 }
 
-func (ps *PostgresStore) CreateUser(user *models.User) error {
+func (ps *PostgresStore) CreateUser(user *shared.User) error {
 	query := `INSERT INTO users
 	(user_id, username, email, password, created_at)
 	values($1, $2, $3, $4, $5)`
@@ -152,11 +152,11 @@ func (ps *PostgresStore) CreateUser(user *models.User) error {
 	return nil
 }
 
-func (ps *PostgresStore) UpdateUser(user *models.User) error {
+func (ps *PostgresStore) UpdateUser(user *shared.User) error {
 	return nil
 }
 
-func (ps *PostgresStore) GetAllUsers() ([]*models.User, error) {
+func (ps *PostgresStore) GetAllUsers() ([]*shared.User, error) {
 	rows, err := ps.db.Query("SELECT * FROM users")
 
 	if err != nil {
@@ -164,7 +164,7 @@ func (ps *PostgresStore) GetAllUsers() ([]*models.User, error) {
 	}
 	defer rows.Close()
 
-	users := []*models.User{}
+	users := []*shared.User{}
 	for rows.Next() {
 		user, err := scanIntoUsers(rows)
 		if err != nil {
@@ -176,7 +176,7 @@ func (ps *PostgresStore) GetAllUsers() ([]*models.User, error) {
 	return users, nil
 }
 
-func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*models.User, error) {
+func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*shared.User, error) {
 	rows, err := ps.db.Query("SELECT * FROM users WHERE user_id = $1", uuid)
 
 	if err != nil {
@@ -201,8 +201,8 @@ func (ps *PostgresStore) DeleteUserById(uuid uuid.UUID) error {
 	return nil
 }
 
-func scanIntoUsers(rows *sql.Rows) (*models.User, error) {
-	user := new(models.User)
+func scanIntoUsers(rows *sql.Rows) (*shared.User, error) {
+	user := new(shared.User)
 	err := rows.Scan(
 		&user.UserID,
 		&user.Username,
@@ -213,16 +213,15 @@ func scanIntoUsers(rows *sql.Rows) (*models.User, error) {
 	return user, err
 }
 
-func (ps *PostgresStore) CreateWallet(wallet *models.Wallet) error {
+func (ps *PostgresStore) CreateWallet(wallet *shared.Wallet) error {
 	query := `INSERT INTO wallets
-	(wallet_id, user_id, balance, created_at)
-	values($1, $2, $3, $4)`
+	(wallet_id, user_id, created_at)
+	values($1, $2, $3)`
 
 	_, err := ps.db.Exec(
 		query,
 		wallet.WalletID,
 		wallet.UserId,
-		wallet.Balance,
 		wallet.CreatedAt,
 	)
 
@@ -233,7 +232,7 @@ func (ps *PostgresStore) CreateWallet(wallet *models.Wallet) error {
 	return nil
 }
 
-func (ps *PostgresStore) GetAllWallets() ([]*models.Wallet, error) {
+func (ps *PostgresStore) GetAllWallets() ([]*shared.Wallet, error) {
 	rows, err := ps.db.Query("SELECT * FROM wallets")
 
 	if err != nil {
@@ -241,7 +240,7 @@ func (ps *PostgresStore) GetAllWallets() ([]*models.Wallet, error) {
 	}
 	defer rows.Close()
 
-	wallets := []*models.Wallet{}
+	wallets := []*shared.Wallet{}
 	for rows.Next() {
 		wallet, err := scanIntoWallets(rows)
 		if err != nil {
@@ -252,7 +251,7 @@ func (ps *PostgresStore) GetAllWallets() ([]*models.Wallet, error) {
 
 	return wallets, nil
 }
-func (ps *PostgresStore) GetWalletById(uuid uuid.UUID) (*models.Wallet, error) {
+func (ps *PostgresStore) GetWalletById(uuid uuid.UUID) (*shared.Wallet, error) {
 	rows, err := ps.db.Query("SELECT * FROM wallets WHERE wallet_id = $1", uuid)
 
 	if err != nil {
@@ -267,7 +266,7 @@ func (ps *PostgresStore) GetWalletById(uuid uuid.UUID) (*models.Wallet, error) {
 	return nil, fmt.Errorf("Wallet %d not found", uuid)
 }
 
-func (ps *PostgresStore) UpdateWallet(wallet *models.Wallet) error {
+func (ps *PostgresStore) UpdateWallet(wallet *shared.Wallet) error {
 	return nil
 }
 
@@ -275,8 +274,8 @@ func (ps *PostgresStore) DeleteWalletById(uuid uuid.UUID) error {
 	return nil
 }
 
-func scanIntoWallets(rows *sql.Rows) (*models.Wallet, error) {
-	wallet := new(models.Wallet)
+func scanIntoWallets(rows *sql.Rows) (*shared.Wallet, error) {
+	wallet := new(shared.Wallet)
 	err := rows.Scan(
 		&wallet.WalletID,
 		&wallet.UserId,
@@ -286,7 +285,7 @@ func scanIntoWallets(rows *sql.Rows) (*models.Wallet, error) {
 	return wallet, err
 }
 
-func (ps *PostgresStore) Charge(transaction *models.Transaction) (*models.Transaction, error) {
+func (ps *PostgresStore) Charge(transaction *shared.Transaction) (*shared.Transaction, error) {
 	tx, err := ps.db.Begin()
 	if err != nil {
 		return nil, err
@@ -310,7 +309,7 @@ func (ps *PostgresStore) Charge(transaction *models.Transaction) (*models.Transa
 		return nil, err
 	}
 	if rowAffected == 0 {
-		oldTransaction := &models.Transaction{}
+		oldTransaction := &shared.Transaction{}
 		queryRead := `SELECT transaction_id, wallet_id, user_id, idempotency_key, amount, status, created_at FROM transactions WHERE idempotency_key = $1`
 		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionID, &oldTransaction.WalletID, &oldTransaction.UserID, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Status, &oldTransaction.CreatedAt)
 		if err != nil {
@@ -348,7 +347,7 @@ func (ps *PostgresStore) Charge(transaction *models.Transaction) (*models.Transa
 	return transaction, tx.Commit()
 }
 
-func (ps *PostgresStore) GetAllTransactions() ([]*models.Transaction, error) {
+func (ps *PostgresStore) GetAllTransactions() ([]*shared.Transaction, error) {
 	rows, err := ps.db.Query("SELECT * FROM transactions")
 
 	if err != nil {
@@ -356,7 +355,7 @@ func (ps *PostgresStore) GetAllTransactions() ([]*models.Transaction, error) {
 	}
 	defer rows.Close()
 
-	transactions := []*models.Transaction{}
+	transactions := []*shared.Transaction{}
 	for rows.Next() {
 		transaction, err := scanIntoTransactions(rows)
 		if err != nil {
@@ -368,8 +367,8 @@ func (ps *PostgresStore) GetAllTransactions() ([]*models.Transaction, error) {
 	return transactions, nil
 }
 
-func scanIntoTransactions(rows *sql.Rows) (*models.Transaction, error) {
-	transaction := new(models.Transaction)
+func scanIntoTransactions(rows *sql.Rows) (*shared.Transaction, error) {
+	transaction := new(shared.Transaction)
 	err := rows.Scan(
 		&transaction.TransactionID,
 		&transaction.WalletID,
