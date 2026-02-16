@@ -1,7 +1,3 @@
-Here is the updated **Product Requirements Document (PRD)** for **Project Asymptotic**.
-
-It adapts the structure of your previous ticket system PRD but fully replaces the content to match the **Universal API Gateway** (Orthogonal Clone) architecture.
-
 ---
 
 # Product Requirements Document
