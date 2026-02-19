@@ -2,9 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -51,8 +51,6 @@ func (s *APIServer) Run() {
 	router := mux.NewRouter()
 	router.HandleFunc("/user", makeHTTPHandleFunc(s.handleUser))
 	router.HandleFunc("/user/{uuid}", withJWTAuth(makeHTTPHandleFunc(s.handleUserById)))
-	router.HandleFunc("/wallet", makeHTTPHandleFunc(s.handleWallet))
-	router.HandleFunc("/wallet/{uuid}", makeHTTPHandleFunc(s.handleWalletById))
 	router.HandleFunc("/transaction", makeHTTPHandleFunc(s.handleTransaction))
 	log.Println("Server is running on port: ", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, router)
@@ -71,10 +69,6 @@ func (s *APIServer) handleUser(w http.ResponseWriter, r *http.Request) error {
 func (s *APIServer) handleUserById(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "GET" {
 		return s.handleGetUserById(w, r)
-	}
-
-	if r.Method == "DELETE" {
-		return s.handleDeleteUserById(w, r)
 	}
 
 	return fmt.Errorf("method not allowed: %s", r.Method)
@@ -100,13 +94,13 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 	defer r.Body.Close()
 
 	newUser := &shared.User{
-		UserID:    uuid.New(),
+		UserId:    uuid.New(),
 		Username:  createUserReq.Username,
 		Password:  createUserReq.Password,
 		CreatedAt: time.Now().UTC(),
 	}
 
-	if err := s.storage.CreateUser(newUser); err != nil {
+	if err := s.storage.CreateUserWithBalance(newUser); err != nil {
 		return err
 	}
 
@@ -118,7 +112,7 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 
 	fmt.Println("JWT Token:", jwt)
 
-	return WriteJSON(w, http.StatusOK, newUser.UserID)
+	return WriteJSON(w, http.StatusOK, newUser.UserId)
 }
 
 func (s *APIServer) handleGetUserById(w http.ResponseWriter, r *http.Request) error {
@@ -137,30 +131,6 @@ func (s *APIServer) handleGetUserById(w http.ResponseWriter, r *http.Request) er
 	return WriteJSON(w, http.StatusOK, user)
 }
 
-func (s *APIServer) handleDeleteUserById(w http.ResponseWriter, r *http.Request) error {
-	uuidVar, err := getUUID(r)
-
-	if err != nil {
-		return err
-	}
-
-	if err := s.storage.DeleteUserById(uuidVar); err != nil {
-		return err
-	}
-
-	return WriteJSON(w, http.StatusOK, map[string]uuid.UUID{"deleted": uuidVar})
-}
-
-func (s *APIServer) handleWallet(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == "GET" {
-		return s.handleGetWallet(w, r)
-	}
-	if r.Method == "POST" {
-		return s.handleCreateWallet(w, r)
-	}
-	return fmt.Errorf("method not allowed: %s", r.Method)
-}
-
 func (s *APIServer) handleTransaction(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "GET" {
 		return s.handleGetTransaction(w, r)
@@ -169,56 +139,6 @@ func (s *APIServer) handleTransaction(w http.ResponseWriter, r *http.Request) er
 		return s.handleCreateTransaction(w, r)
 	}
 	return fmt.Errorf("method not allowed: %s", r.Method)
-}
-
-func (s *APIServer) handleWalletById(w http.ResponseWriter, r *http.Request) error {
-	uuidVar, err := getUUID(r)
-
-	wallet, err := s.storage.GetWalletById(uuidVar)
-
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(w, http.StatusOK, wallet)
-}
-
-func (s *APIServer) handleGetWallet(w http.ResponseWriter, r *http.Request) error {
-	wallets, err := s.storage.GetAllWallets()
-
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(w, http.StatusOK, wallets)
-}
-
-func (s *APIServer) handleCreateWallet(w http.ResponseWriter, r *http.Request) error {
-	createWalletReq := new(CreateWalletRequest)
-
-	if err := json.NewDecoder(r.Body).Decode(createWalletReq); err != nil {
-		return err
-	}
-
-	defer r.Body.Close()
-
-	newWallet := &shared.Wallet{
-		WalletID:  uuid.New(),
-		UserId:    createWalletReq.UserId,
-		CreatedAt: time.Now().UTC(),
-	}
-
-	err := s.storage.CreateWallet(newWallet)
-
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(w, http.StatusOK, newWallet)
-}
-
-func (s *APIServer) handleDeleteWallet(w http.ResponseWriter, r *http.Request) error {
-	return nil
 }
 
 func (s *APIServer) handleGetTransaction(w http.ResponseWriter, r *http.Request) error {
@@ -232,8 +152,6 @@ func (s *APIServer) handleGetTransaction(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *APIServer) handleCreateTransaction(w http.ResponseWriter, r *http.Request) error {
-	var err error
-	maxRetries := 20
 	createTransactionRequest := new(CreateTransactionRequest)
 
 	if err := json.NewDecoder(r.Body).Decode(createTransactionRequest); err != nil {
@@ -241,35 +159,54 @@ func (s *APIServer) handleCreateTransaction(w http.ResponseWriter, r *http.Reque
 	}
 
 	defer r.Body.Close()
-
-	newTransaction := &shared.Transaction{
-		TransactionID:  uuid.New(),
-		WalletID:       createTransactionRequest.WalletID,
-		UserID:         createTransactionRequest.UserID,
-		IdempotencyKey: createTransactionRequest.IdempotencyKey,
-		Amount:         createTransactionRequest.Amount,
-		CreatedAt:      time.Now().UTC(),
-	}
-	for range maxRetries {
+	switch createTransactionRequest.Type {
+	case "CHARGE":
+		newTransaction := &shared.Transaction{
+			TransactionId:  uuid.New(),
+			UserId:         createTransactionRequest.UserId,
+			IdempotencyKey: createTransactionRequest.IdempotencyKey,
+			Amount:         createTransactionRequest.Amount,
+			Type:           "CHARGE",
+			CreatedAt:      time.Now().UTC(),
+		}
 		tx, err := s.storage.Charge(newTransaction)
-		if err == nil {
-			return WriteJSON(w, http.StatusOK, tx)
-		}
-		if !strings.Contains(err.Error(), "conflict") {
-			break
-		}
-		sleepTime := time.Duration(rand.Intn(20)+5) * time.Millisecond
-		time.Sleep(sleepTime)
-	}
 
-	if err != nil {
-		if strings.Contains(err.Error(), "insufficient funds") {
-			return WriteJSON(w, http.StatusConflict, ApiError{Error: "insufficient funds"})
-		} else if strings.Contains(err.Error(), "conflict") {
-			return WriteJSON(w, http.StatusServiceUnavailable, ApiError{Error: "system busy, please try again"})
+		if err != nil {
+			if errors.Is(err, db.ErrInsufficientFunds) {
+				return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "insufficient funds"})
+			} else if errors.Is(err, db.ErrAmountNotGreaterThanZero) {
+				return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "amount not greater than 0"})
+			} else if strings.Contains(err.Error(), "conflict") {
+				return WriteJSON(w, http.StatusServiceUnavailable, ApiError{Error: "system busy, please try again"})
+			} else {
+				return WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
+			}
 		}
+		return WriteJSON(w, http.StatusOK, tx)
+	case "DEPOSIT":
+		newTransaction := &shared.Transaction{
+			TransactionId:  uuid.New(),
+			UserId:         createTransactionRequest.UserId,
+			IdempotencyKey: createTransactionRequest.IdempotencyKey,
+			Amount:         createTransactionRequest.Amount,
+			Type:           "DEPOSIT",
+			CreatedAt:      time.Now().UTC(),
+		}
+		tx, err := s.storage.Deposit(newTransaction)
+
+		if err != nil {
+			if errors.Is(err, db.ErrAmountNotGreaterThanZero) {
+				return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "amount not greater than 0"})
+			} else if strings.Contains(err.Error(), "conflict") {
+				return WriteJSON(w, http.StatusServiceUnavailable, ApiError{Error: "system busy, please try again"})
+			} else {
+				return WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
+			}
+		}
+		return WriteJSON(w, http.StatusOK, tx)
+	default:
+		return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "invalid transaction type, must be CHARGE or DEPOSIT"})
 	}
-	return WriteJSON(w, http.StatusInternalServerError, ApiError{Error: err.Error()})
 }
 
 func getUUID(r *http.Request) (uuid.UUID, error) {

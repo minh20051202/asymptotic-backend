@@ -10,14 +10,9 @@ type CreateUserRequest struct {
 	Password string `json:"password"`
 }
 
-type CreateWalletRequest struct {
-	UserId  uuid.UUID `json:"userId"`
-	Balance int64     `json:"Balance"`
-}
-
 type CreateTransactionRequest struct {
-	WalletID       uuid.UUID `json:"walletId"`
-	UserID         uuid.UUID `json:"userId"`
+	UserId         uuid.UUID `json:"userId"`
 	IdempotencyKey string    `json:"idempotencyKey"`
 	Amount         int64     `json:"amount"`
+	Type           string    `json:"type"`
 }

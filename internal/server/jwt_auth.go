@@ -15,7 +15,7 @@ var jwtSecretKey = os.Getenv("JWT_SECRET_KEY")
 func createJWT(user *shared.User) (string, error) {
 	claims := &jwt.MapClaims{
 		"expiresAt": 15000,
-		"userId":    user.UserID,
+		"userId":    user.UserId,
 		"username":  user.Username,
 	}
 

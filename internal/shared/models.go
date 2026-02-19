@@ -7,26 +7,32 @@ import (
 )
 
 type User struct {
-	UserID    uuid.UUID `json:"userId"`
+	UserId    uuid.UUID `json:"userId"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type Wallet struct {
-	WalletID  uuid.UUID `json:"walletId"`
+type Balance struct {
 	UserId    uuid.UUID `json:"userId"`
 	Balance   int64     `json:"balance"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Transaction struct {
-	TransactionID  uuid.UUID `json:"transactionId"`
-	WalletID       uuid.UUID `json:"walletId"`
-	UserID         uuid.UUID `json:"userId"`
+	TransactionId  uuid.UUID `json:"transactionId"`
+	UserId         uuid.UUID `json:"userId"`
 	IdempotencyKey string    `json:"idempotencyKey"`
 	Amount         int64     `json:"amount"`
+	Type           string    `json:"typr"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"createdAt"`
+}
+
+type ApiKey struct {
+	ApiKey    string    `json:"apiKey"`
+	UserId    int64     `json:"userId"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
 }

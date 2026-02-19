@@ -14,21 +14,18 @@ import (
 )
 
 var ErrInsufficientFunds = errors.New("insufficient funds")
+var ErrAmountNotGreaterThanZero = errors.New("amount not greater than 0")
 
 type Storage interface {
-	CreateUser(*shared.User) error
-	DeleteUserById(uuid.UUID) error
+	CreateUserWithBalance(*shared.User) error
 	UpdateUser(*shared.User) error
 	GetAllUsers() ([]*shared.User, error)
 	GetUserById(uuid.UUID) (*shared.User, error)
 
-	CreateWallet(*shared.Wallet) error
-	DeleteWalletById(uuid.UUID) error
-	UpdateWallet(*shared.Wallet) error
-	GetAllWallets() ([]*shared.Wallet, error)
-	GetWalletById(uuid.UUID) (*shared.Wallet, error)
+	GetBalanceById(uuid.UUID) (*shared.Balance, error)
 
 	Charge(*shared.Transaction) (*shared.Transaction, error)
+	Deposit(*shared.Transaction) (*shared.Transaction, error)
 	GetAllTransactions() ([]*shared.Transaction, error)
 }
 
@@ -68,10 +65,13 @@ func (ps *PostgresStore) Init() error {
 	if err := ps.createUserTable(); err != nil {
 		return err
 	}
-	if err := ps.createWalletTable(); err != nil {
+	if err := ps.createBalanceTable(); err != nil {
 		return err
 	}
 	if err := ps.createTransactionTable(); err != nil {
+		return err
+	}
+	if err := ps.createApiKeyTable(); err != nil {
 		return err
 	}
 	return nil
@@ -93,13 +93,12 @@ func (ps *PostgresStore) createUserTable() error {
 	return err
 }
 
-func (ps *PostgresStore) createWalletTable() error {
-	query := `CREATE TABLE IF NOT EXISTS wallets (
-        wallet_id UUID PRIMARY KEY,
-        user_id UUID NOT NULL,
+func (ps *PostgresStore) createBalanceTable() error {
+	query := `CREATE TABLE IF NOT EXISTS balances (
+        user_id UUID PRIMARY KEY,
         balance BIGINT DEFAULT 0 CHECK(balance >= 0),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT fk_wallet_user
+        CONSTRAINT fk_balance_user
             FOREIGN KEY (user_id)
                 REFERENCES users(user_id)
                     ON DELETE RESTRICT
@@ -111,17 +110,13 @@ func (ps *PostgresStore) createWalletTable() error {
 func (ps *PostgresStore) createTransactionTable() error {
 	query := `CREATE TABLE IF NOT EXISTS transactions (
         transaction_id UUID PRIMARY KEY,
-        wallet_id UUID NOT NULL,
         user_id UUID NOT NULL,
         idempotency_key VARCHAR(255) UNIQUE NOT NULL,
         amount BIGINT NOT NULL,
+		type VARCHAR(20) NOT NULL CHECK (type IN ('CHARGE', 'DEPOSIT')),
         status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'FAILED', 'SUCCEEDED')) DEFAULT 'PENDING', 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-        CONSTRAINT fk_transaction_wallet
-            FOREIGN KEY (wallet_id)
-                REFERENCES wallets(wallet_id)
-                    ON DELETE RESTRICT,
         CONSTRAINT fk_transaction_user
             FOREIGN KEY (user_id)
                 REFERENCES users(user_id)
@@ -131,25 +126,49 @@ func (ps *PostgresStore) createTransactionTable() error {
 	return err
 }
 
-func (ps *PostgresStore) CreateUser(user *shared.User) error {
-	query := `INSERT INTO users
-	(user_id, username, email, password, created_at)
-	values($1, $2, $3, $4, $5)`
+func (ps *PostgresStore) createApiKeyTable() error {
+	query := `CREATE TABLE IF NOT EXISTS api_keys (
+        api_key VARCHAR(255) PRIMARY KEY,
+        user_id UUID NOT NULL,
+        name VARCHAR(50) NOT NULL, 
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_apikey_user
+            FOREIGN KEY (user_id)
+                REFERENCES users(user_id)
+                    ON DELETE RESTRICT
+    )`
+	_, err := ps.db.Exec(query)
+	return err
+}
 
-	_, err := ps.db.Exec(
-		query,
-		user.UserID,
-		user.Username,
-		user.Email,
-		user.Password,
-		user.CreatedAt,
-	)
+func (ps *PostgresStore) CreateUserWithBalance(user *shared.User) error {
+	tx, err := ps.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
 
+	userQuery := `
+		INSERT INTO users (user_id, username, email, password, created_at) 
+		VALUES ($1, $2, $3, $4, $5)
+	`
+
+	_, err = tx.Exec(userQuery, user.UserId, user.Username, user.Email, user.Password, user.CreatedAt)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	balanceQuery := `
+		INSERT INTO balances (user_id, balance, created_at) 
+		VALUES ($1, $2, $3)
+	`
+
+	_, err = tx.Exec(balanceQuery, user.UserId, 0, user.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (ps *PostgresStore) UpdateUser(user *shared.User) error {
@@ -157,7 +176,7 @@ func (ps *PostgresStore) UpdateUser(user *shared.User) error {
 }
 
 func (ps *PostgresStore) GetAllUsers() ([]*shared.User, error) {
-	rows, err := ps.db.Query("SELECT * FROM users")
+	rows, err := ps.db.Query("SELECT user_id, username, email, password, created_at FROM users")
 
 	if err != nil {
 		return nil, err
@@ -177,7 +196,7 @@ func (ps *PostgresStore) GetAllUsers() ([]*shared.User, error) {
 }
 
 func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*shared.User, error) {
-	rows, err := ps.db.Query("SELECT * FROM users WHERE user_id = $1", uuid)
+	rows, err := ps.db.Query("SELECT user_id, username, email, password, created_at FROM users WHERE user_id = $1", uuid)
 
 	if err != nil {
 		return nil, err
@@ -188,23 +207,13 @@ func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*shared.User, error) {
 		return scanIntoUsers(rows)
 	}
 
-	return nil, fmt.Errorf("User %d not found", uuid)
-}
-
-func (ps *PostgresStore) DeleteUserById(uuid uuid.UUID) error {
-	_, err := ps.db.Exec("DELETE FROM users WHERE user_id = $1", uuid)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return nil, fmt.Errorf("User %v not found", uuid)
 }
 
 func scanIntoUsers(rows *sql.Rows) (*shared.User, error) {
 	user := new(shared.User)
 	err := rows.Scan(
-		&user.UserID,
+		&user.UserId,
 		&user.Username,
 		&user.Email,
 		&user.Password,
@@ -213,46 +222,8 @@ func scanIntoUsers(rows *sql.Rows) (*shared.User, error) {
 	return user, err
 }
 
-func (ps *PostgresStore) CreateWallet(wallet *shared.Wallet) error {
-	query := `INSERT INTO wallets
-	(wallet_id, user_id, created_at)
-	values($1, $2, $3)`
-
-	_, err := ps.db.Exec(
-		query,
-		wallet.WalletID,
-		wallet.UserId,
-		wallet.CreatedAt,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (ps *PostgresStore) GetAllWallets() ([]*shared.Wallet, error) {
-	rows, err := ps.db.Query("SELECT * FROM wallets")
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	wallets := []*shared.Wallet{}
-	for rows.Next() {
-		wallet, err := scanIntoWallets(rows)
-		if err != nil {
-			return nil, err
-		}
-		wallets = append(wallets, wallet)
-	}
-
-	return wallets, nil
-}
-func (ps *PostgresStore) GetWalletById(uuid uuid.UUID) (*shared.Wallet, error) {
-	rows, err := ps.db.Query("SELECT * FROM wallets WHERE wallet_id = $1", uuid)
+func (ps *PostgresStore) GetBalanceById(uuid uuid.UUID) (*shared.Balance, error) {
+	rows, err := ps.db.Query("SELECT * FROM balances WHERE user_id = $1", uuid)
 
 	if err != nil {
 		return nil, err
@@ -260,29 +231,20 @@ func (ps *PostgresStore) GetWalletById(uuid uuid.UUID) (*shared.Wallet, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		return scanIntoWallets(rows)
+		return scanIntoBalances(rows)
 	}
 
-	return nil, fmt.Errorf("Wallet %d not found", uuid)
+	return nil, fmt.Errorf("User %v not found", uuid)
 }
 
-func (ps *PostgresStore) UpdateWallet(wallet *shared.Wallet) error {
-	return nil
-}
-
-func (ps *PostgresStore) DeleteWalletById(uuid uuid.UUID) error {
-	return nil
-}
-
-func scanIntoWallets(rows *sql.Rows) (*shared.Wallet, error) {
-	wallet := new(shared.Wallet)
+func scanIntoBalances(rows *sql.Rows) (*shared.Balance, error) {
+	balance := new(shared.Balance)
 	err := rows.Scan(
-		&wallet.WalletID,
-		&wallet.UserId,
-		&wallet.Balance,
-		&wallet.CreatedAt,
+		&balance.UserId,
+		&balance.Balance,
+		&balance.CreatedAt,
 	)
-	return wallet, err
+	return balance, err
 }
 
 func (ps *PostgresStore) Charge(transaction *shared.Transaction) (*shared.Transaction, error) {
@@ -293,13 +255,17 @@ func (ps *PostgresStore) Charge(transaction *shared.Transaction) (*shared.Transa
 
 	defer tx.Rollback()
 
+	if transaction.Amount <= 0 {
+		return nil, ErrAmountNotGreaterThanZero
+	}
+
 	queryTransaction := `
-		INSERT INTO transactions (transaction_id, wallet_id, user_id, idempotency_key, amount, created_at)
+		INSERT INTO transactions (transaction_id, user_id, idempotency_key, amount, type, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (idempotency_key) DO NOTHING
 	`
 
-	result, err := tx.Exec(queryTransaction, transaction.TransactionID, transaction.WalletID, transaction.UserID, transaction.IdempotencyKey, transaction.Amount, transaction.CreatedAt)
+	result, err := tx.Exec(queryTransaction, transaction.TransactionId, transaction.UserId, transaction.IdempotencyKey, transaction.Amount, transaction.Type, transaction.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -310,8 +276,8 @@ func (ps *PostgresStore) Charge(transaction *shared.Transaction) (*shared.Transa
 	}
 	if rowAffected == 0 {
 		oldTransaction := &shared.Transaction{}
-		queryRead := `SELECT transaction_id, wallet_id, user_id, idempotency_key, amount, status, created_at FROM transactions WHERE idempotency_key = $1`
-		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionID, &oldTransaction.WalletID, &oldTransaction.UserID, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Status, &oldTransaction.CreatedAt)
+		queryRead := `SELECT transaction_id, user_id, idempotency_key, amount, type, status, created_at FROM transactions WHERE idempotency_key = $1`
+		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionId, &oldTransaction.UserId, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Type, &oldTransaction.Status, &oldTransaction.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -319,9 +285,9 @@ func (ps *PostgresStore) Charge(transaction *shared.Transaction) (*shared.Transa
 	}
 
 	var balance int64
-	queryRead := `SELECT balance FROM wallets WHERE wallet_id = $1 FOR UPDATE`
+	queryRead := `SELECT balance FROM balances WHERE user_id = $1 FOR UPDATE`
 
-	err = tx.QueryRow(queryRead, transaction.WalletID).Scan(&balance)
+	err = tx.QueryRow(queryRead, transaction.UserId).Scan(&balance)
 	if err != nil {
 		return nil, err
 	}
@@ -333,11 +299,73 @@ func (ps *PostgresStore) Charge(transaction *shared.Transaction) (*shared.Transa
 	newBalance := balance - int64(transaction.Amount)
 
 	queryUpdate := `
-        UPDATE wallets 
+        UPDATE balances 
         SET balance = $1
-        WHERE wallet_id = $2
+        WHERE user_id = $2
     `
-	_, err = tx.Exec(queryUpdate, newBalance, transaction.WalletID)
+	_, err = tx.Exec(queryUpdate, newBalance, transaction.UserId)
+	if err != nil {
+		return nil, err
+	}
+
+	transaction.Status = "PENDING"
+
+	return transaction, tx.Commit()
+}
+
+func (ps *PostgresStore) Deposit(transaction *shared.Transaction) (*shared.Transaction, error) {
+	tx, err := ps.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback()
+
+	if transaction.Amount <= 0 {
+		return nil, ErrAmountNotGreaterThanZero
+	}
+
+	queryTransaction := `
+		INSERT INTO transactions (transaction_id, user_id, idempotency_key, amount, type, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (idempotency_key) DO NOTHING
+	`
+
+	result, err := tx.Exec(queryTransaction, transaction.TransactionId, transaction.UserId, transaction.IdempotencyKey, transaction.Amount, transaction.Type, transaction.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	rowAffected, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rowAffected == 0 {
+		oldTransaction := &shared.Transaction{}
+		queryRead := `SELECT transaction_id, user_id, idempotency_key, amount, type, status, created_at FROM transactions WHERE idempotency_key = $1`
+		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionId, &oldTransaction.UserId, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Type, &oldTransaction.Status, &oldTransaction.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		return oldTransaction, nil
+	}
+
+	var balance int64
+	queryRead := `SELECT balance FROM balances WHERE user_id = $1 FOR UPDATE`
+
+	err = tx.QueryRow(queryRead, transaction.UserId).Scan(&balance)
+	if err != nil {
+		return nil, err
+	}
+
+	newBalance := balance + int64(transaction.Amount)
+
+	queryUpdate := `
+        UPDATE balances 
+        SET balance = $1
+        WHERE user_id = $2
+    `
+	_, err = tx.Exec(queryUpdate, newBalance, transaction.UserId)
 	if err != nil {
 		return nil, err
 	}
@@ -370,12 +398,27 @@ func (ps *PostgresStore) GetAllTransactions() ([]*shared.Transaction, error) {
 func scanIntoTransactions(rows *sql.Rows) (*shared.Transaction, error) {
 	transaction := new(shared.Transaction)
 	err := rows.Scan(
-		&transaction.TransactionID,
-		&transaction.WalletID,
-		&transaction.UserID,
+		&transaction.TransactionId,
+		&transaction.UserId,
 		&transaction.IdempotencyKey,
 		&transaction.Amount,
 		&transaction.Status,
 		&transaction.CreatedAt)
 	return transaction, err
+}
+
+func (ps *PostgresStore) GetUserIdByApiKey(apiKey string) (uuid.UUID, error) {
+	var userId uuid.UUID
+
+	query := `SELECT user_id FROM api_keys WHERE api_key = $1`
+
+	err := ps.db.QueryRow(query, apiKey).Scan(&userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return uuid.Nil, fmt.Errorf("invalid API key")
+		}
+		return uuid.Nil, err
+	}
+
+	return userId, nil
 }
