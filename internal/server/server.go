@@ -159,6 +159,7 @@ func (s *APIServer) handleCreateTransaction(w http.ResponseWriter, r *http.Reque
 	}
 
 	defer r.Body.Close()
+
 	switch createTransactionRequest.Type {
 	case "CHARGE":
 		newTransaction := &shared.Transaction{

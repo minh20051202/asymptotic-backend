@@ -16,3 +16,8 @@ type CreateTransactionRequest struct {
 	Amount         int64     `json:"amount"`
 	Type           string    `json:"type"`
 }
+
+type CreateApiKeyRequest struct {
+	UserId uuid.UUID `json:"userId"`
+	Name   string    `json:"name"`
+}
