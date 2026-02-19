@@ -23,9 +23,11 @@ type Storage interface {
 	GetUserById(uuid.UUID) (*shared.User, error)
 
 	GetBalanceById(uuid.UUID) (*shared.Balance, error)
+	GetUserIdByApiKey(apiKey string) (uuid.UUID, error)
 
 	Charge(*shared.Transaction) (*shared.Transaction, error)
 	Deposit(*shared.Transaction) (*shared.Transaction, error)
+	UpdateTransactionStatus(txId uuid.UUID, status string) error
 	GetAllTransactions() ([]*shared.Transaction, error)
 }
 
@@ -373,6 +375,12 @@ func (ps *PostgresStore) Deposit(transaction *shared.Transaction) (*shared.Trans
 	transaction.Status = "PENDING"
 
 	return transaction, tx.Commit()
+}
+
+func (ps *PostgresStore) UpdateTransactionStatus(txId uuid.UUID, status string) error {
+	query := `UPDATE transactions SET status = $1 WHERE transaction_id = $2`
+	_, err := ps.db.Exec(query, status, txId)
+	return err
 }
 
 func (ps *PostgresStore) GetAllTransactions() ([]*shared.Transaction, error) {

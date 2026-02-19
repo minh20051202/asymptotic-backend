@@ -25,14 +25,14 @@ type Transaction struct {
 	UserId         uuid.UUID `json:"userId"`
 	IdempotencyKey string    `json:"idempotencyKey"`
 	Amount         int64     `json:"amount"`
-	Type           string    `json:"typr"`
+	Type           string    `json:"type"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"createdAt"`
 }
 
 type ApiKey struct {
 	ApiKey    string    `json:"apiKey"`
-	UserId    int64     `json:"userId"`
+	UserId    uuid.UUID `json:"userId"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 }
