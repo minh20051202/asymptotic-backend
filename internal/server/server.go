@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,9 +13,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/minh20051202/ticket-system-backend/internal/auth"
+	"github.com/minh20051202/ticket-system-backend/internal/crypto"
 	db "github.com/minh20051202/ticket-system-backend/internal/database"
 	"github.com/minh20051202/ticket-system-backend/internal/shared"
 )
+
+const PREFIX string = "asym_sk_"
 
 func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -49,9 +55,11 @@ func NewAPIServer(listenAddr string, storage db.Storage) *APIServer {
 
 func (s *APIServer) Run() {
 	router := mux.NewRouter()
+	router.HandleFunc("/login", makeHTTPHandleFunc(s.handleLogin))
 	router.HandleFunc("/user", makeHTTPHandleFunc(s.handleUser))
 	router.HandleFunc("/user/{uuid}", withJWTAuth(makeHTTPHandleFunc(s.handleUserById)))
 	router.HandleFunc("/transaction", makeHTTPHandleFunc(s.handleTransaction))
+	router.HandleFunc("/api-keys", withJWTAuth(makeHTTPHandleFunc(s.handleCreateApiKey)))
 	log.Println("Server is running on port: ", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, router)
 }
@@ -93,10 +101,16 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 
 	defer r.Body.Close()
 
+	hashedPassword, err := auth.HashPassword(createUserReq.Password)
+
+	if err != nil {
+		return err
+	}
+
 	newUser := &shared.User{
 		UserId:    uuid.New(),
 		Username:  createUserReq.Username,
-		Password:  createUserReq.Password,
+		Password:  hashedPassword,
 		CreatedAt: time.Now().UTC(),
 	}
 
@@ -112,7 +126,7 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 
 	fmt.Println("JWT Token:", jwt)
 
-	return WriteJSON(w, http.StatusOK, newUser.UserId)
+	return WriteJSON(w, http.StatusOK, jwt)
 }
 
 func (s *APIServer) handleGetUserById(w http.ResponseWriter, r *http.Request) error {
@@ -208,6 +222,68 @@ func (s *APIServer) handleCreateTransaction(w http.ResponseWriter, r *http.Reque
 	default:
 		return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "invalid transaction type, must be CHARGE or DEPOSIT"})
 	}
+}
+
+func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
+	loginRequest := new(LoginRequest)
+
+	if err := json.NewDecoder(r.Body).Decode(loginRequest); err != nil {
+		return err
+	}
+
+	defer r.Body.Close()
+
+	user, err := s.storage.GetUserByUsername(loginRequest.Username)
+
+	if err != nil {
+		return fmt.Errorf("Invalid username or password")
+	}
+
+	if err := auth.CheckPasswordHash(loginRequest.Password, user.Password); err != nil {
+		return err
+	}
+
+	jwt, err := createJWT(user)
+
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, jwt)
+}
+
+func (s *APIServer) handleCreateApiKey(w http.ResponseWriter, r *http.Request) error {
+	userId := r.Context().Value("userId")
+
+	parsedUserId := userId.(uuid.UUID)
+
+	apiKeyReq := new(CreateApiKeyRequest)
+
+	if err := json.NewDecoder(r.Body).Decode(apiKeyReq); err != nil {
+		return err
+	}
+
+	defer r.Body.Close()
+
+	key, err := crypto.GenerateSecureToken(32)
+
+	key = fmt.Sprintf("%v%v", PREFIX, key)
+
+	hashedKey := sha256.Sum256([]byte(key))
+
+	apiKey := &shared.ApiKey{
+		ApiKey: hex.EncodeToString(hashedKey[:]),
+		UserId: parsedUserId,
+		Name:   apiKeyReq.Name,
+	}
+
+	err = s.storage.CreateApiKey(apiKey)
+
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, CreateApiKeyResponse{ApiKey: key})
 }
 
 func getUUID(r *http.Request) (uuid.UUID, error) {

@@ -1,8 +1,8 @@
 build:
-	@go build -o bin/ticket-system
+	@go build -o bin/asymptotic-backend
 
 run: build
-	@./bin/ticket-system
+	@./bin/asymptotic-backend
 
 test:
 	@go test -v ./...

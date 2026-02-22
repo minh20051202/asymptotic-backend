@@ -21,13 +21,15 @@ type Storage interface {
 	UpdateUser(*shared.User) error
 	GetAllUsers() ([]*shared.User, error)
 	GetUserById(uuid.UUID) (*shared.User, error)
+	GetUserByUsername(string) (*shared.User, error)
 
 	GetBalanceById(uuid.UUID) (*shared.Balance, error)
-	GetUserIdByApiKey(apiKey string) (uuid.UUID, error)
+	CreateApiKey(*shared.ApiKey) error
+	GetUserIdByApiKey(string) (uuid.UUID, error)
 
 	Charge(*shared.Transaction) (*shared.Transaction, error)
 	Deposit(*shared.Transaction) (*shared.Transaction, error)
-	UpdateTransactionStatus(txId uuid.UUID, status string) error
+	UpdateTransactionStatus(uuid.UUID, string) error
 	GetAllTransactions() ([]*shared.Transaction, error)
 }
 
@@ -210,6 +212,21 @@ func (ps *PostgresStore) GetUserById(uuid uuid.UUID) (*shared.User, error) {
 	}
 
 	return nil, fmt.Errorf("User %v not found", uuid)
+}
+
+func (ps *PostgresStore) GetUserByUsername(username string) (*shared.User, error) {
+	rows, err := ps.db.Query("SELECT user_id, username, email, password, created_at FROM users WHERE username = $1", username)
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		return scanIntoUsers(rows)
+	}
+
+	return nil, fmt.Errorf("User %v not found", username)
 }
 
 func scanIntoUsers(rows *sql.Rows) (*shared.User, error) {
@@ -415,12 +432,12 @@ func scanIntoTransactions(rows *sql.Rows) (*shared.Transaction, error) {
 	return transaction, err
 }
 
-func (ps *PostgresStore) GetUserIdByApiKey(apiKey string) (uuid.UUID, error) {
+func (ps *PostgresStore) GetUserIdByApiKey(apiKeyHash string) (uuid.UUID, error) {
 	var userId uuid.UUID
 
 	query := `SELECT user_id FROM api_keys WHERE api_key = $1`
 
-	err := ps.db.QueryRow(query, apiKey).Scan(&userId)
+	err := ps.db.QueryRow(query, apiKeyHash).Scan(&userId)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return uuid.Nil, fmt.Errorf("invalid API key")
@@ -429,4 +446,26 @@ func (ps *PostgresStore) GetUserIdByApiKey(apiKey string) (uuid.UUID, error) {
 	}
 
 	return userId, nil
+}
+
+func (ps *PostgresStore) CreateApiKey(apiKey *shared.ApiKey) error {
+	tx, err := ps.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	queryApiKey := `
+		INSERT INTO api_keys(api_key, user_id, name, created_at)
+		VALUES ($1, $2, $3, $4)
+	`
+
+	_, err = tx.Exec(queryApiKey, apiKey.ApiKey, apiKey.UserId, apiKey.Name, apiKey.CreatedAt)
+
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }

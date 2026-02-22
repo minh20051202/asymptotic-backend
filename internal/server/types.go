@@ -21,3 +21,12 @@ type CreateApiKeyRequest struct {
 	UserId uuid.UUID `json:"userId"`
 	Name   string    `json:"name"`
 }
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type CreateApiKeyResponse struct {
+	ApiKey string `json:"apiKey"`
+}
