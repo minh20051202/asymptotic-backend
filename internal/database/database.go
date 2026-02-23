@@ -136,6 +136,7 @@ func (ps *PostgresStore) createApiKeyTable() error {
         user_id UUID NOT NULL,
         name VARCHAR(50) NOT NULL, 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(user_id, name),
         CONSTRAINT fk_apikey_user
             FOREIGN KEY (user_id)
                 REFERENCES users(user_id)

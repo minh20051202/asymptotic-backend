@@ -10,6 +10,12 @@ type CreateUserRequest struct {
 	Password string `json:"password"`
 }
 
+type CreateUserResponse struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	JWT      string `json:"jwt"`
+}
+
 type CreateTransactionRequest struct {
 	UserId         uuid.UUID `json:"userId"`
 	IdempotencyKey string    `json:"idempotencyKey"`
@@ -18,8 +24,7 @@ type CreateTransactionRequest struct {
 }
 
 type CreateApiKeyRequest struct {
-	UserId uuid.UUID `json:"userId"`
-	Name   string    `json:"name"`
+	Name string `json:"name"`
 }
 
 type LoginRequest struct {

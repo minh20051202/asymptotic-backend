@@ -110,12 +110,13 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 	newUser := &shared.User{
 		UserId:    uuid.New(),
 		Username:  createUserReq.Username,
+		Email:     createUserReq.Email,
 		Password:  hashedPassword,
 		CreatedAt: time.Now().UTC(),
 	}
 
 	if err := s.storage.CreateUserWithBalance(newUser); err != nil {
-		return err
+		return WriteJSON(w, http.StatusBadRequest, ApiError{Error: "Username already exists"})
 	}
 
 	jwt, err := createJWT(newUser)
@@ -124,9 +125,7 @@ func (s *APIServer) handleCreateUser(w http.ResponseWriter, r *http.Request) err
 		return err
 	}
 
-	fmt.Println("JWT Token:", jwt)
-
-	return WriteJSON(w, http.StatusOK, jwt)
+	return WriteJSON(w, http.StatusOK, CreateUserResponse{Username: newUser.Username, Email: newUser.Email, JWT: jwt})
 }
 
 func (s *APIServer) handleGetUserById(w http.ResponseWriter, r *http.Request) error {
@@ -239,7 +238,7 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("Invalid username or password")
 	}
 
-	if err := auth.CheckPasswordHash(loginRequest.Password, user.Password); err != nil {
+	if err := auth.CheckPasswordHash(user.Password, loginRequest.Password); err != nil {
 		return err
 	}
 
@@ -253,9 +252,11 @@ func (s *APIServer) handleLogin(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *APIServer) handleCreateApiKey(w http.ResponseWriter, r *http.Request) error {
-	userId := r.Context().Value("userId")
+	userId, ok := getUserIDFromContext(r.Context())
 
-	parsedUserId := userId.(uuid.UUID)
+	if !ok {
+		return fmt.Errorf("Invalid credential")
+	}
 
 	apiKeyReq := new(CreateApiKeyRequest)
 
@@ -273,7 +274,7 @@ func (s *APIServer) handleCreateApiKey(w http.ResponseWriter, r *http.Request) e
 
 	apiKey := &shared.ApiKey{
 		ApiKey: hex.EncodeToString(hashedKey[:]),
-		UserId: parsedUserId,
+		UserId: userId,
 		Name:   apiKeyReq.Name,
 	}
 

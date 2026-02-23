@@ -74,3 +74,8 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 		return []byte(jwtSecretKey), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 }
+
+func getUserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+	id, ok := ctx.Value(userContextKey).(uuid.UUID)
+	return id, ok
+}
