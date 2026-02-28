@@ -1,5 +1,5 @@
 build:
-	@go build -o bin/asymptotic-backend
+	@go build -o bin/asymptotic-backend ./cmd/api
 
 run: build
 	@./bin/asymptotic-backend
