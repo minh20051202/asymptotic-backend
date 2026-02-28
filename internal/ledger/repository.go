@@ -236,7 +236,7 @@ func (r *PostgresRepository) UpdateTransactionStatus(txId uuid.UUID, status stri
 }
 
 func (r *PostgresRepository) GetAllTransactions() ([]*shared.Transaction, error) {
-	rows, err := r.db.Query("SELECT * FROM transactions")
+	rows, err := r.db.Query("SELECT transaction_id, user_id, idempotency_key, amount, type, status, created_at FROM transactions")
 
 	if err != nil {
 		return nil, err
@@ -263,6 +263,7 @@ func scanIntoTransactions(rows *sql.Rows) (*shared.Transaction, error) {
 		&transaction.IdempotencyKey,
 		&transaction.Amount,
 		&transaction.Status,
+		&transaction.Type,
 		&transaction.CreatedAt)
 	return transaction, err
 }

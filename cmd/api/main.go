@@ -31,13 +31,21 @@ func main() {
 	defer db.Close()
 
 	identityRepo := identity.NewPostgresRepository(db)
+	if err := identityRepo.Init(); err != nil {
+		log.Fatal("Failed to init identity tables:", err)
+	}
 	identityService := identity.NewService(identityRepo)
 	identityHandler := identity.NewHandler(identityService)
+
 	ledgerRepo := ledger.NewPostgresRepository(db)
+	if err := ledgerRepo.Init(); err != nil {
+		log.Fatal("Failed to init ledger tables:", err)
+	}
 	ledgerService := ledger.NewService(ledgerRepo)
 	ledgerHandler := ledger.NewHandler(ledgerService)
 
 	router := mux.NewRouter()
+
 	identityHandler.RegisterRoutes(router)
 	ledgerHandler.RegisterRoutes(router)
 
