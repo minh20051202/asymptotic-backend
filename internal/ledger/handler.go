@@ -6,11 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/minh20051202/ticket-system-backend/internal/shared"
 	"github.com/minh20051202/ticket-system-backend/internal/utils"
 )
 
@@ -35,7 +32,7 @@ func (h *ledgerHandler) handleTransaction(w http.ResponseWriter, r *http.Request
 	if r.Method == "POST" {
 		return h.handleCreateTransaction(w, r)
 	}
-	return fmt.Errorf("method not allowed: %h", r.Method)
+	return fmt.Errorf("method not allowed: %s", r.Method)
 }
 
 func (h *ledgerHandler) handleGetTransaction(w http.ResponseWriter, r *http.Request) error {
@@ -49,7 +46,7 @@ func (h *ledgerHandler) handleGetTransaction(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ledgerHandler) handleCreateTransaction(w http.ResponseWriter, r *http.Request) error {
-	createTransactionRequest := new(shared.CreateTransactionRequest)
+	createTransactionRequest := new(CreateTransactionRequest)
 
 	if err := json.NewDecoder(r.Body).Decode(createTransactionRequest); err != nil {
 		return err
@@ -59,15 +56,8 @@ func (h *ledgerHandler) handleCreateTransaction(w http.ResponseWriter, r *http.R
 
 	switch createTransactionRequest.Type {
 	case "CHARGE":
-		newTransaction := &shared.Transaction{
-			TransactionId:  uuid.New(),
-			UserId:         createTransactionRequest.UserId,
-			IdempotencyKey: createTransactionRequest.IdempotencyKey,
-			Amount:         createTransactionRequest.Amount,
-			Type:           "CHARGE",
-			CreatedAt:      time.Now().UTC(),
-		}
-		tx, err := h.service.Charge(newTransaction)
+
+		tx, err := h.service.Charge(createTransactionRequest)
 
 		if err != nil {
 			if errors.Is(err, ErrInsufficientFunds) {
@@ -82,15 +72,7 @@ func (h *ledgerHandler) handleCreateTransaction(w http.ResponseWriter, r *http.R
 		}
 		return utils.WriteJSON(w, http.StatusOK, tx)
 	case "DEPOSIT":
-		newTransaction := &shared.Transaction{
-			TransactionId:  uuid.New(),
-			UserId:         createTransactionRequest.UserId,
-			IdempotencyKey: createTransactionRequest.IdempotencyKey,
-			Amount:         createTransactionRequest.Amount,
-			Type:           "DEPOSIT",
-			CreatedAt:      time.Now().UTC(),
-		}
-		tx, err := h.service.Deposit(newTransaction)
+		tx, err := h.service.Deposit(createTransactionRequest)
 
 		if err != nil {
 			if errors.Is(err, ErrAmountNotGreaterThanZero) {

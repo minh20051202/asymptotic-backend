@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/minh20051202/ticket-system-backend/internal/shared"
 )
 
 var ErrInsufficientFunds = errors.New("insufficient funds")
@@ -15,12 +14,12 @@ var ErrAmountNotGreaterThanZero = errors.New("amount not greater than 0")
 type LedgerRepository interface {
 	Init() error
 
-	GetBalanceById(uuid.UUID) (*shared.Balance, error)
+	GetBalanceById(uuid uuid.UUID) (*Balance, error)
 
-	Charge(*shared.Transaction) (*shared.Transaction, error)
-	Deposit(*shared.Transaction) (*shared.Transaction, error)
+	Charge(transaction *Transaction) (*Transaction, error)
+	Deposit(transaction *Transaction) (*Transaction, error)
 	UpdateTransactionStatus(uuid.UUID, string) error
-	GetAllTransactions() ([]*shared.Transaction, error)
+	GetAllTransactions() ([]*Transaction, error)
 }
 
 type PostgresRepository struct {
@@ -54,7 +53,10 @@ func (r *PostgresRepository) createBalanceTable() error {
                     ON DELETE RESTRICT
     )`
 	_, err := r.db.Exec(query)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *PostgresRepository) createTransactionTable() error {
@@ -73,35 +75,34 @@ func (r *PostgresRepository) createTransactionTable() error {
                     ON DELETE RESTRICT
     )`
 	_, err := r.db.Exec(query)
-	return err
-}
-
-func (r *PostgresRepository) GetBalanceById(uuid uuid.UUID) (*shared.Balance, error) {
-	rows, err := r.db.Query("SELECT * FROM balances WHERE user_id = $1", uuid)
-
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		return scanIntoBalances(rows)
-	}
-
-	return nil, fmt.Errorf("User %v not found", uuid)
+	return nil
 }
 
-func scanIntoBalances(rows *sql.Rows) (*shared.Balance, error) {
-	balance := new(shared.Balance)
-	err := rows.Scan(
+func (r *PostgresRepository) GetBalanceById(uuid uuid.UUID) (*Balance, error) {
+	balance := new(Balance)
+
+	query := `SELECT user_id, balance, created_at FROM balances WHERE user_id = $1`
+
+	err := r.db.QueryRow(query, uuid).Scan(
 		&balance.UserId,
 		&balance.Balance,
 		&balance.CreatedAt,
 	)
-	return balance, err
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user %s no balance found", uuid)
+		}
+		return nil, err
+	}
+
+	return balance, nil
 }
 
-func (r *PostgresRepository) Charge(transaction *shared.Transaction) (*shared.Transaction, error) {
+func (r *PostgresRepository) Charge(transaction *Transaction) (*Transaction, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return nil, err
@@ -129,7 +130,7 @@ func (r *PostgresRepository) Charge(transaction *shared.Transaction) (*shared.Tr
 		return nil, err
 	}
 	if rowAffected == 0 {
-		oldTransaction := &shared.Transaction{}
+		oldTransaction := &Transaction{}
 		queryRead := `SELECT transaction_id, user_id, idempotency_key, amount, type, status, created_at FROM transactions WHERE idempotency_key = $1`
 		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionId, &oldTransaction.UserId, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Type, &oldTransaction.Status, &oldTransaction.CreatedAt)
 		if err != nil {
@@ -167,7 +168,7 @@ func (r *PostgresRepository) Charge(transaction *shared.Transaction) (*shared.Tr
 	return transaction, tx.Commit()
 }
 
-func (r *PostgresRepository) Deposit(transaction *shared.Transaction) (*shared.Transaction, error) {
+func (r *PostgresRepository) Deposit(transaction *Transaction) (*Transaction, error) {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return nil, err
@@ -195,7 +196,7 @@ func (r *PostgresRepository) Deposit(transaction *shared.Transaction) (*shared.T
 		return nil, err
 	}
 	if rowAffected == 0 {
-		oldTransaction := &shared.Transaction{}
+		oldTransaction := &Transaction{}
 		queryRead := `SELECT transaction_id, user_id, idempotency_key, amount, type, status, created_at FROM transactions WHERE idempotency_key = $1`
 		err = tx.QueryRow(queryRead, transaction.IdempotencyKey).Scan(&oldTransaction.TransactionId, &oldTransaction.UserId, &oldTransaction.IdempotencyKey, &oldTransaction.Amount, &oldTransaction.Type, &oldTransaction.Status, &oldTransaction.CreatedAt)
 		if err != nil {
@@ -232,10 +233,13 @@ func (r *PostgresRepository) Deposit(transaction *shared.Transaction) (*shared.T
 func (r *PostgresRepository) UpdateTransactionStatus(txId uuid.UUID, status string) error {
 	query := `UPDATE transactions SET status = $1 WHERE transaction_id = $2`
 	_, err := r.db.Exec(query, status, txId)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *PostgresRepository) GetAllTransactions() ([]*shared.Transaction, error) {
+func (r *PostgresRepository) GetAllTransactions() ([]*Transaction, error) {
 	rows, err := r.db.Query("SELECT transaction_id, user_id, idempotency_key, amount, type, status, created_at FROM transactions")
 
 	if err != nil {
@@ -243,7 +247,7 @@ func (r *PostgresRepository) GetAllTransactions() ([]*shared.Transaction, error)
 	}
 	defer rows.Close()
 
-	transactions := []*shared.Transaction{}
+	transactions := []*Transaction{}
 	for rows.Next() {
 		transaction, err := scanIntoTransactions(rows)
 		if err != nil {
@@ -255,15 +259,18 @@ func (r *PostgresRepository) GetAllTransactions() ([]*shared.Transaction, error)
 	return transactions, nil
 }
 
-func scanIntoTransactions(rows *sql.Rows) (*shared.Transaction, error) {
-	transaction := new(shared.Transaction)
+func scanIntoTransactions(rows *sql.Rows) (*Transaction, error) {
+	transaction := new(Transaction)
 	err := rows.Scan(
 		&transaction.TransactionId,
 		&transaction.UserId,
 		&transaction.IdempotencyKey,
 		&transaction.Amount,
-		&transaction.Status,
 		&transaction.Type,
+		&transaction.Status,
 		&transaction.CreatedAt)
-	return transaction, err
+	if err != nil {
+		return nil, err
+	}
+	return transaction, nil
 }

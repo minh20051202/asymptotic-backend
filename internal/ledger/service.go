@@ -1,12 +1,16 @@
 package ledger
 
-import "github.com/minh20051202/ticket-system-backend/internal/shared"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type LedgerService interface {
-	Charge(transaction *shared.Transaction) (*shared.Transaction, error)
-	Deposit(transaction *shared.Transaction) (*shared.Transaction, error)
+	Charge(req *CreateTransactionRequest) (*Transaction, error)
+	Deposit(req *CreateTransactionRequest) (*Transaction, error)
 
-	GetAllTransactions() ([]*shared.Transaction, error)
+	GetAllTransactions() ([]*Transaction, error)
 }
 
 type service struct {
@@ -19,8 +23,16 @@ func NewService(repo LedgerRepository) *service {
 	}
 }
 
-func (s *service) Charge(transaction *shared.Transaction) (*shared.Transaction, error) {
-	tx, err := s.repo.Charge(transaction)
+func (s *service) Charge(req *CreateTransactionRequest) (*Transaction, error) {
+	newTransaction := &Transaction{
+		TransactionId:  uuid.New(),
+		UserId:         req.UserId,
+		IdempotencyKey: req.IdempotencyKey,
+		Amount:         req.Amount,
+		Type:           "CHARGE",
+		CreatedAt:      time.Now().UTC(),
+	}
+	tx, err := s.repo.Charge(newTransaction)
 
 	if err != nil {
 		return nil, err
@@ -29,8 +41,16 @@ func (s *service) Charge(transaction *shared.Transaction) (*shared.Transaction, 
 	return tx, nil
 }
 
-func (s *service) Deposit(transaction *shared.Transaction) (*shared.Transaction, error) {
-	tx, err := s.repo.Deposit(transaction)
+func (s *service) Deposit(req *CreateTransactionRequest) (*Transaction, error) {
+	newTransaction := &Transaction{
+		TransactionId:  uuid.New(),
+		UserId:         req.UserId,
+		IdempotencyKey: req.IdempotencyKey,
+		Amount:         req.Amount,
+		Type:           "DEPOSITE",
+		CreatedAt:      time.Now().UTC(),
+	}
+	tx, err := s.repo.Deposit(newTransaction)
 
 	if err != nil {
 		return nil, err
@@ -39,7 +59,7 @@ func (s *service) Deposit(transaction *shared.Transaction) (*shared.Transaction,
 	return tx, nil
 }
 
-func (s *service) GetAllTransactions() ([]*shared.Transaction, error) {
+func (s *service) GetAllTransactions() ([]*Transaction, error) {
 	txs, err := s.repo.GetAllTransactions()
 
 	if err != nil {

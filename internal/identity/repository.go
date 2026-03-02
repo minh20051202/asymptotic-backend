@@ -5,20 +5,19 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/minh20051202/ticket-system-backend/internal/shared"
 )
 
 type IdentityRepository interface {
 	Init() error
 
-	CreateUserWithBalance(*shared.User) error
-	UpdateUser(*shared.User) error
-	GetAllUsers() ([]*shared.User, error)
-	GetUserById(uuid.UUID) (*shared.User, error)
-	GetUserByUsername(string) (*shared.User, error)
+	CreateUserWithBalance(user *User) error
+	UpdateUser(user *User) error
+	GetAllUsers() ([]*User, error)
+	GetUserById(uuid uuid.UUID) (*User, error)
+	GetUserByUsername(username string) (*User, error)
 
-	CreateApiKey(*shared.ApiKey) error
-	GetUserIdByApiKey(string) (uuid.UUID, error)
+	CreateApiKey(apiKey *ApiKey) error
+	GetUserIdByApiKeyHash(apiKeyHash string) (uuid.UUID, error)
 }
 
 type PostgresRepository struct {
@@ -47,10 +46,14 @@ func (r *PostgresRepository) createUserTable() error {
         username VARCHAR(50) UNIQUE NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
+		role VARCHAR(20) CHECK (role IN ('USER', 'ADMIN')) DEFAULT 'USER',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
 	_, err := r.db.Exec(query)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *PostgresRepository) createApiKeyTable() error {
@@ -66,10 +69,13 @@ func (r *PostgresRepository) createApiKeyTable() error {
                     ON DELETE RESTRICT
     )`
 	_, err := r.db.Exec(query)
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *PostgresRepository) CreateUserWithBalance(user *shared.User) error {
+func (r *PostgresRepository) CreateUserWithBalance(user *User) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
@@ -99,11 +105,11 @@ func (r *PostgresRepository) CreateUserWithBalance(user *shared.User) error {
 	return tx.Commit()
 }
 
-func (r *PostgresRepository) UpdateUser(user *shared.User) error {
+func (r *PostgresRepository) UpdateUser(user *User) error {
 	return nil
 }
 
-func (r *PostgresRepository) GetAllUsers() ([]*shared.User, error) {
+func (r *PostgresRepository) GetAllUsers() ([]*User, error) {
 	rows, err := r.db.Query("SELECT user_id, username, email, password, created_at FROM users")
 
 	if err != nil {
@@ -111,7 +117,8 @@ func (r *PostgresRepository) GetAllUsers() ([]*shared.User, error) {
 	}
 	defer rows.Close()
 
-	users := []*shared.User{}
+	users := []*User{}
+
 	for rows.Next() {
 		user, err := scanIntoUsers(rows)
 		if err != nil {
@@ -123,37 +130,53 @@ func (r *PostgresRepository) GetAllUsers() ([]*shared.User, error) {
 	return users, nil
 }
 
-func (r *PostgresRepository) GetUserById(uuid uuid.UUID) (*shared.User, error) {
-	rows, err := r.db.Query("SELECT user_id, username, email, password, created_at FROM users WHERE user_id = $1", uuid)
+func (r *PostgresRepository) GetUserById(uuid uuid.UUID) (*User, error) {
+	user := new(User)
+
+	query := `SELECT user_id, username, email, password, created_at FROM users WHERE user_id = $1`
+
+	err := r.db.QueryRow(query, uuid).Scan(
+		&user.UserId,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user %s not found", uuid)
+		}
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		return scanIntoUsers(rows)
-	}
-
-	return nil, fmt.Errorf("User %v not found", uuid)
+	return user, nil
 }
 
-func (r *PostgresRepository) GetUserByUsername(username string) (*shared.User, error) {
-	rows, err := r.db.Query("SELECT user_id, username, email, password, created_at FROM users WHERE username = $1", username)
+func (r *PostgresRepository) GetUserByUsername(username string) (*User, error) {
+	user := new(User)
+
+	query := `SELECT user_id, username, email, password, created_at FROM users WHERE username = $1`
+
+	err := r.db.QueryRow(query, username).Scan(
+		&user.UserId,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
 
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("user %s not found", username)
+		}
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		return scanIntoUsers(rows)
-	}
-
-	return nil, fmt.Errorf("User %v not found", username)
+	return user, nil
 }
 
-func (r *PostgresRepository) CreateApiKey(apiKey *shared.ApiKey) error {
+func (r *PostgresRepository) CreateApiKey(apiKey *ApiKey) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
@@ -175,7 +198,7 @@ func (r *PostgresRepository) CreateApiKey(apiKey *shared.ApiKey) error {
 	return tx.Commit()
 }
 
-func (r *PostgresRepository) GetUserIdByApiKey(apiKeyHash string) (uuid.UUID, error) {
+func (r *PostgresRepository) GetUserIdByApiKeyHash(apiKeyHash string) (uuid.UUID, error) {
 	var userId uuid.UUID
 
 	query := `SELECT user_id FROM api_keys WHERE api_key = $1`
@@ -191,8 +214,8 @@ func (r *PostgresRepository) GetUserIdByApiKey(apiKeyHash string) (uuid.UUID, er
 	return userId, nil
 }
 
-func scanIntoUsers(rows *sql.Rows) (*shared.User, error) {
-	user := new(shared.User)
+func scanIntoUsers(rows *sql.Rows) (*User, error) {
+	user := new(User)
 	err := rows.Scan(
 		&user.UserId,
 		&user.Username,
@@ -200,5 +223,8 @@ func scanIntoUsers(rows *sql.Rows) (*shared.User, error) {
 		&user.Password,
 		&user.CreatedAt,
 	)
-	return user, err
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/minh20051202/ticket-system-backend/internal/shared"
 	"github.com/minh20051202/ticket-system-backend/internal/utils"
 )
 
@@ -35,7 +34,7 @@ func (h *identityHandler) handleUser(w http.ResponseWriter, r *http.Request) err
 	if r.Method == "POST" {
 		return h.handleCreateUser(w, r)
 	}
-	return fmt.Errorf("method not allowed: %h", r.Method)
+	return fmt.Errorf("method not allowed: %s", r.Method)
 }
 
 func (h *identityHandler) handleUserById(w http.ResponseWriter, r *http.Request) error {
@@ -43,7 +42,7 @@ func (h *identityHandler) handleUserById(w http.ResponseWriter, r *http.Request)
 		return h.handleGetUserById(w, r)
 	}
 
-	return fmt.Errorf("method not allowed: %h", r.Method)
+	return fmt.Errorf("method not allowed: %s", r.Method)
 }
 
 func (h *identityHandler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
@@ -57,7 +56,7 @@ func (h *identityHandler) handleGetUser(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *identityHandler) handleCreateUser(w http.ResponseWriter, r *http.Request) error {
-	createUserReq := new(shared.CreateUserRequest)
+	createUserReq := new(CreateUserRequest)
 
 	if err := json.NewDecoder(r.Body).Decode(createUserReq); err != nil {
 		return utils.WriteJSON(w, http.StatusBadRequest, utils.ApiError{Error: "invalid credentials"})
@@ -71,7 +70,7 @@ func (h *identityHandler) handleCreateUser(w http.ResponseWriter, r *http.Reques
 		return utils.WriteJSON(w, http.StatusInternalServerError, utils.ApiError{Error: "Internal server error. Please try again later!"})
 	}
 
-	return utils.WriteJSON(w, http.StatusOK, shared.CreateUserResponse{Username: createUserReq.Username, Email: createUserReq.Email, JWT: jwt})
+	return utils.WriteJSON(w, http.StatusOK, CreateUserResponse{Username: createUserReq.Username, Email: createUserReq.Email, JWT: jwt})
 }
 
 func (h *identityHandler) handleGetUserById(w http.ResponseWriter, r *http.Request) error {
@@ -97,7 +96,7 @@ func (h *identityHandler) handleCreateApiKey(w http.ResponseWriter, r *http.Requ
 		return utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid credentials"})
 	}
 
-	apiKeyReq := new(shared.CreateApiKeyRequest)
+	apiKeyReq := new(CreateApiKeyRequest)
 
 	if err := json.NewDecoder(r.Body).Decode(apiKeyReq); err != nil {
 		return err
@@ -111,7 +110,7 @@ func (h *identityHandler) handleCreateApiKey(w http.ResponseWriter, r *http.Requ
 		return utils.WriteJSON(w, http.StatusInternalServerError, utils.ApiError{Error: "Internal server error. Please try again later!"})
 	}
 
-	return utils.WriteJSON(w, http.StatusOK, shared.CreateApiKeyResponse{ApiKey: apiKey})
+	return utils.WriteJSON(w, http.StatusOK, CreateApiKeyResponse{ApiKey: apiKey})
 }
 
 func getUUID(r *http.Request) (uuid.UUID, error) {
@@ -119,14 +118,14 @@ func getUUID(r *http.Request) (uuid.UUID, error) {
 	uuid, err := uuid.Parse(uuidStr)
 
 	if err != nil {
-		return uuid, fmt.Errorf("Invalid uuid given %h", uuid)
+		return uuid, fmt.Errorf("Invalid uuid given %s", uuid)
 	}
 
 	return uuid, nil
 }
 
 func (h *identityHandler) handleLogin(w http.ResponseWriter, r *http.Request) error {
-	loginRequest := new(shared.LoginRequest)
+	loginRequest := new(LoginRequest)
 
 	if err := json.NewDecoder(r.Body).Decode(loginRequest); err != nil {
 		return err
@@ -141,12 +140,4 @@ func (h *identityHandler) handleLogin(w http.ResponseWriter, r *http.Request) er
 	}
 
 	return utils.WriteJSON(w, http.StatusOK, jwt)
-}
-
-func (h *identityHandler) handleRun(w http.ResponseWriter, r *http.Request) error {
-	return nil
-}
-
-func (h *identityHandler) handleSearch(w http.ResponseWriter, r *http.Request) error {
-	return nil
 }

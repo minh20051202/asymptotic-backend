@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/minh20051202/ticket-system-backend/internal/shared"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -24,12 +23,12 @@ const API_KEY_PREFIX string = "asym_sk_"
 var jwtSecretKey = os.Getenv("JWT_SECRET_KEY")
 
 type IdentityService interface {
-	CreateUser(req *shared.CreateUserRequest) (string, error)
-	Login(req *shared.LoginRequest) (string, error)
-	GetAllUsers() ([]*shared.User, error)
-	GetUserById(uuid uuid.UUID) (*shared.User, error)
+	CreateUser(req *CreateUserRequest) (string, error)
+	Login(req *LoginRequest) (string, error)
+	GetAllUsers() ([]*User, error)
+	GetUserById(uuid uuid.UUID) (*User, error)
 
-	CreateApiKey(userId uuid.UUID, req *shared.CreateApiKeyRequest) (string, error)
+	CreateApiKey(userId uuid.UUID, req *CreateApiKeyRequest) (string, error)
 }
 
 type service struct {
@@ -42,14 +41,14 @@ func NewService(repo IdentityRepository) *service {
 	}
 }
 
-func (s *service) CreateUser(req *shared.CreateUserRequest) (string, error) {
+func (s *service) CreateUser(req *CreateUserRequest) (string, error) {
 	hashedPassword, err := hashPassword(req.Password)
 
 	if err != nil {
 		return "", err
 	}
 
-	newUser := &shared.User{
+	newUser := &User{
 		UserId:    uuid.New(),
 		Username:  req.Username,
 		Email:     req.Email,
@@ -70,7 +69,7 @@ func (s *service) CreateUser(req *shared.CreateUserRequest) (string, error) {
 	return jwt, nil
 }
 
-func (s *service) Login(req *shared.LoginRequest) (string, error) {
+func (s *service) Login(req *LoginRequest) (string, error) {
 
 	user, err := s.repo.GetUserByUsername(req.Username)
 
@@ -90,7 +89,7 @@ func (s *service) Login(req *shared.LoginRequest) (string, error) {
 	return jwt, nil
 }
 
-func (s *service) GetAllUsers() ([]*shared.User, error) {
+func (s *service) GetAllUsers() ([]*User, error) {
 	users, err := s.repo.GetAllUsers()
 
 	if err != nil {
@@ -100,7 +99,7 @@ func (s *service) GetAllUsers() ([]*shared.User, error) {
 	return users, nil
 }
 
-func (s *service) GetUserById(uuid uuid.UUID) (*shared.User, error) {
+func (s *service) GetUserById(uuid uuid.UUID) (*User, error) {
 	user, err := s.repo.GetUserById(uuid)
 	if err != nil {
 		return nil, err
@@ -108,14 +107,14 @@ func (s *service) GetUserById(uuid uuid.UUID) (*shared.User, error) {
 	return user, nil
 }
 
-func (s *service) CreateApiKey(userId uuid.UUID, req *shared.CreateApiKeyRequest) (string, error) {
+func (s *service) CreateApiKey(userId uuid.UUID, req *CreateApiKeyRequest) (string, error) {
 	key, err := generateSecureToken(32)
 
 	key = fmt.Sprintf("%v%v", API_KEY_PREFIX, key)
 
 	hashedKey := sha256.Sum256([]byte(key))
 
-	apiKey := &shared.ApiKey{
+	apiKey := &ApiKey{
 		ApiKey: hex.EncodeToString(hashedKey[:]),
 		UserId: userId,
 		Name:   req.Name,
@@ -157,11 +156,12 @@ func generateSecureToken(n int) (string, error) {
 	return fmt.Sprintf("%x", b), nil
 }
 
-func createJWT(user *shared.User) (string, error) {
-	claims := &jwt.MapClaims{
-		"expiresAt": 15000,
-		"userId":    user.UserId,
-		"username":  user.Username,
+func createJWT(user *User) (string, error) {
+	claims := jwt.MapClaims{
+		"userId":   user.UserId.String(),
+		"username": user.Username,
+		"role":     user.Role,
+		"exp":      time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
