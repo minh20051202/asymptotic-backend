@@ -41,6 +41,13 @@ type RouteConfig struct {
 	Cost               int64
 }
 
+type ReadyRoute struct {
+	FullURL string
+	Method  string
+	APIKey  string
+	Cost    int64
+}
+
 type ToolInfo struct {
 	EndpointId   int64
 	ProviderName string
@@ -56,28 +63,39 @@ type CreateProviderRequest struct {
 	ApiKey  string `json:"apiKey"`
 }
 
+type CreateProviderResponse struct {
+	Name    string `json:"name"`
+	BaseUrl string `json:"baseUrl"`
+}
+
 type GetProviderResponse struct {
-	ProviderId      int64     `json:"providerId"`
-	Name            string    `json:"name"`
-	BaseUrl         string    `json:"baseUrl"`
-	EncryptedApiKey string    `json:"-"`
-	IsActive        bool      `json:"isActive"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	ProviderId      int64  `json:"providerId"`
+	Name            string `json:"name"`
+	BaseUrl         string `json:"baseUrl"`
+	EncryptedApiKey string `json:"-"`
+	IsActive        bool   `json:"isActive"`
 }
 
 type CreateEndpointRequest struct {
-	ProviderId int64     `json:"providerId"`
-	Name       string    `json:"name"`
-	HttpMethod string    `json:"httpMethod"`
-	Path       string    `json:"path"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ProviderId int64  `json:"providerId"`
+	Name       string `json:"name"`
+	HttpMethod string `json:"httpMethod"`
+	Path       string `json:"path"`
+}
+
+type CreateEndpointResponse struct {
+	ProviderId int64  `json:"providerId"`
+	Name       string `json:"name"`
+	HttpMethod string `json:"httpMethod"`
+	Path       string `json:"path"`
 }
 
 type CreatePricingRequest struct {
-	EndpointId int64     `json:"endpointId"`
-	Cost       int64     `json:"cost"`
-	IsCurrent  bool      `json:"isCurrent"`
-	CreatedAt  time.Time `json:"createdAt"`
+	EndpointId int64 `json:"endpointId"`
+	Cost       int64 `json:"cost"`
+}
+
+type CreatePricingResponse struct {
+	EndpointId int64 `json:"endpointId"`
+	Cost       int64 `json:"cost"`
 }

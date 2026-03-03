@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
@@ -29,6 +28,7 @@ type IdentityService interface {
 	GetUserById(uuid uuid.UUID) (*User, error)
 
 	CreateApiKey(userId uuid.UUID, req *CreateApiKeyRequest) (string, error)
+	GetUserIdByApiKeyHash(apiKeyHash string) (uuid.UUID, error)
 }
 
 type service struct {
@@ -128,6 +128,10 @@ func (s *service) CreateApiKey(userId uuid.UUID, req *CreateApiKeyRequest) (stri
 	return apiKey.ApiKey, err
 }
 
+func (s *service) GetUserIdByApiKeyHash(apiKeyHash string) (uuid.UUID, error) {
+	return s.repo.GetUserIdByApiKeyHash(apiKeyHash)
+}
+
 func hashPassword(password string) (string, error) {
 	cost := bcrypt.DefaultCost
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), cost)
@@ -173,9 +177,4 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 	return jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		return []byte(jwtSecretKey), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
-}
-
-func getUserIdFromContext(ctx context.Context) (uuid.UUID, bool) {
-	id, ok := ctx.Value(userContextKey).(uuid.UUID)
-	return id, ok
 }

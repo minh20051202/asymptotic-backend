@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,28 +22,11 @@ func NewHandler(service IdentityService) *identityHandler {
 }
 
 func (h *identityHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/login", utils.MakeHTTPHandleFunc(h.handleLogin))
-	router.HandleFunc("/user", utils.MakeHTTPHandleFunc(h.handleUser))
-	router.HandleFunc("/user/{uuid}", withJWTAuth(utils.MakeHTTPHandleFunc(h.handleUserById)))
-	router.HandleFunc("/api-keys", withJWTAuth(utils.MakeHTTPHandleFunc(h.handleCreateApiKey)))
-}
-
-func (h *identityHandler) handleUser(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == "GET" {
-		return h.handleGetUser(w, r)
-	}
-	if r.Method == "POST" {
-		return h.handleCreateUser(w, r)
-	}
-	return fmt.Errorf("method not allowed: %s", r.Method)
-}
-
-func (h *identityHandler) handleUserById(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == "GET" {
-		return h.handleGetUserById(w, r)
-	}
-
-	return fmt.Errorf("method not allowed: %s", r.Method)
+	router.HandleFunc("/login", utils.MakeHTTPHandleFunc(h.handleLogin)).Methods(http.MethodPost)
+	router.HandleFunc("/user", utils.MakeHTTPHandleFunc(h.handleGetUser)).Methods(http.MethodGet)
+	router.HandleFunc("/user", utils.MakeHTTPHandleFunc(h.handleCreateUser)).Methods(http.MethodPost)
+	router.HandleFunc("/user/{uuid}", withJWTAuth(utils.MakeHTTPHandleFunc(h.handleGetUserById))).Methods(http.MethodGet)
+	router.HandleFunc("/api-keys", withJWTAuth(utils.MakeHTTPHandleFunc(h.handleCreateApiKey))).Methods(http.MethodPost)
 }
 
 func (h *identityHandler) handleGetUser(w http.ResponseWriter, r *http.Request) error {
@@ -90,7 +74,7 @@ func (h *identityHandler) handleGetUserById(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *identityHandler) handleCreateApiKey(w http.ResponseWriter, r *http.Request) error {
-	userId, ok := getUserIdFromContext(r.Context())
+	userId, ok := GetUserIdFromContext(r.Context())
 
 	if !ok {
 		return utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid credentials"})
@@ -140,4 +124,9 @@ func (h *identityHandler) handleLogin(w http.ResponseWriter, r *http.Request) er
 	}
 
 	return utils.WriteJSON(w, http.StatusOK, jwt)
+}
+
+func GetUserIdFromContext(ctx context.Context) (uuid.UUID, bool) {
+	id, ok := ctx.Value(userContextKey).(uuid.UUID)
+	return id, ok
 }

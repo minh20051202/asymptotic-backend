@@ -3,7 +3,6 @@ package ledger
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,17 +21,8 @@ func NewHandler(service LedgerService) *ledgerHandler {
 }
 
 func (h *ledgerHandler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/transaction", utils.MakeHTTPHandleFunc(h.handleTransaction))
-}
-
-func (h *ledgerHandler) handleTransaction(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == "GET" {
-		return h.handleGetTransaction(w, r)
-	}
-	if r.Method == "POST" {
-		return h.handleCreateTransaction(w, r)
-	}
-	return fmt.Errorf("method not allowed: %s", r.Method)
+	router.HandleFunc("/transaction", utils.MakeHTTPHandleFunc(h.handleGetTransaction)).Methods(http.MethodGet)
+	router.HandleFunc("/transaction", utils.MakeHTTPHandleFunc(h.handleCreateTransaction)).Methods(http.MethodPost)
 }
 
 func (h *ledgerHandler) handleGetTransaction(w http.ResponseWriter, r *http.Request) error {
@@ -57,7 +47,7 @@ func (h *ledgerHandler) handleCreateTransaction(w http.ResponseWriter, r *http.R
 	switch createTransactionRequest.Type {
 	case "CHARGE":
 
-		tx, err := h.service.Charge(createTransactionRequest)
+		tx, err := h.service.ChargeWithRequest(createTransactionRequest)
 
 		if err != nil {
 			if errors.Is(err, ErrInsufficientFunds) {
