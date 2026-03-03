@@ -2,6 +2,8 @@ package identity
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"strings"
 
@@ -10,51 +12,38 @@ import (
 	"github.com/minh20051202/ticket-system-backend/internal/utils"
 )
 
-func withApiKeyAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "missing authorization header"})
-			return
+func WithApiKeyAuth(s IdentityService) func(http.HandlerFunc) http.HandlerFunc {
+	return func(handlerFunc http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "missing authorization header"})
+				return
+			}
+
+			parts := strings.Split(authHeader, " ")
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid authorization format"})
+				return
+			}
+
+			key := parts[1]
+
+			hashedKey := sha256.Sum256([]byte(key))
+
+			hashedKeyHex := hex.EncodeToString(hashedKey[:])
+
+			userId, err := s.GetUserIdByApiKeyHash(hashedKeyHex)
+			if err != nil {
+				utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid API key"})
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), userContextKey, userId)
+			r = r.WithContext(ctx)
+
+			handlerFunc(w, r)
 		}
-
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid authorization format"})
-			return
-		}
-		tokenString := parts[1]
-		token, err := validateJWT(tokenString)
-
-		if err != nil {
-			utils.WriteJSON(w, http.StatusForbidden, utils.ApiError{Error: "permission denied"})
-			return
-		}
-
-		if !token.Valid {
-			utils.WriteJSON(w, http.StatusForbidden, utils.ApiError{Error: "permission denied"})
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-
-		if !ok {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid token claims"})
-			return
-		}
-
-		claim, err := uuid.Parse(claims["userId"].(string))
-
-		if err != nil {
-			utils.WriteJSON(w, http.StatusUnauthorized, utils.ApiError{Error: "invalid token claims"})
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), userContextKey, claim)
-
-		r = r.WithContext(ctx)
-
-		handlerFunc(w, r)
 	}
 }
 

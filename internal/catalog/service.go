@@ -12,6 +12,15 @@ var SECRET_KEY = os.Getenv("SECRET_KEY")
 
 type CatalogService interface {
 	CreateProvider(req *CreateProviderRequest) error
+
+	CreateEndpoint(req *CreateEndpointRequest) error
+
+	CreatePricing(req *CreatePricingRequest) error
+	SetNewPrice(endpointId int64, newCost int64) error
+
+	GetRouteConfigByNames(providerName, endpointName, endpointPath string) (*ReadyRoute, error)
+	GetRouteConfigById(endpointId int64) (*RouteConfig, error)
+	GetAllAvailableTools() ([]*ToolInfo, error)
 }
 
 type service struct {
@@ -47,16 +56,6 @@ func (s *service) CreateProvider(req *CreateProviderRequest) error {
 	}
 
 	return nil
-}
-
-func (s *service) GetAllAvailableTools() ([]*ToolInfo, error) {
-	toolsInfo, err := s.repo.GetAllAvailableTools()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return toolsInfo, nil
 }
 
 func (s *service) CreateEndpoint(req *CreateEndpointRequest) error {
@@ -97,18 +96,56 @@ func (s *service) CreatePricing(req *CreatePricingRequest) error {
 	return nil
 }
 
-func (s *service) CreatePricing(req *CreatePricingRequest) error {
-	pricing := &Pricing{
-		EndpointId: req.EndpointId,
-		Cost:       req.Cost,
-		IsCurrent:  true,
-		CreatedAt:  time.Now().UTC(),
+func (s *service) SetNewPrice(endpointId int64, newCost int64) error {
+	if newCost < 0 {
+		return fmt.Errorf("invalid cost: %d. price cannot be negative", newCost)
 	}
 
-	err := s.repo.CreatePricing(pricing)
+	err := s.repo.SetNewPrice(endpointId, newCost)
 	if err != nil {
-		return fmt.Errorf("failed to initialize pricing: %w", err)
+		return err
 	}
 
 	return nil
+}
+
+func (s *service) GetRouteConfigById(endpointId int64) (*RouteConfig, error) {
+	routeConfig, err := s.repo.GetRouteConfigById(endpointId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return routeConfig, nil
+}
+
+func (s *service) GetAllAvailableTools() ([]*ToolInfo, error) {
+	toolsInfo, err := s.repo.GetAllAvailableTools()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toolsInfo, nil
+}
+
+func (s *service) GetRouteConfigByNames(providerName, endpointName, endpointPath string) (*ReadyRoute, error) {
+	route, err := s.repo.GetRouteConfigByNames(providerName, endpointName, endpointPath)
+	if err != nil {
+		return nil, err
+	}
+
+	apiKey, err := utils.Decrypt(route.EncryptedApiKey, SECRET_KEY)
+	if err != nil {
+		return nil, err
+	}
+
+	readyRoute := &ReadyRoute{
+		FullURL: route.ProviderBaseUrl + route.EndpointPath,
+		Method:  route.EndpointHttpMethod,
+		APIKey:  apiKey,
+		Cost:    route.Cost,
+	}
+
+	return readyRoute, nil
 }

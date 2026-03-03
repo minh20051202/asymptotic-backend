@@ -7,10 +7,11 @@ import (
 )
 
 type LedgerService interface {
-	Charge(req *CreateTransactionRequest) (*Transaction, error)
+	ChargeWithRequest(req *CreateTransactionRequest) (*Transaction, error)
 	Deposit(req *CreateTransactionRequest) (*Transaction, error)
 
 	GetAllTransactions() ([]*Transaction, error)
+	Charge(userId uuid.UUID, amount int64, idempotencyKey string) error
 }
 
 type service struct {
@@ -23,7 +24,22 @@ func NewService(repo LedgerRepository) *service {
 	}
 }
 
-func (s *service) Charge(req *CreateTransactionRequest) (*Transaction, error) {
+func (s *service) Charge(userId uuid.UUID, amount int64, idempotencyKey string) error {
+	req := &CreateTransactionRequest{
+		UserId:         userId,
+		Amount:         amount,
+		IdempotencyKey: idempotencyKey,
+		Type:           "CHARGE",
+	}
+
+	_, err := s.ChargeWithRequest(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *service) ChargeWithRequest(req *CreateTransactionRequest) (*Transaction, error) {
 	newTransaction := &Transaction{
 		TransactionId:  uuid.New(),
 		UserId:         req.UserId,
@@ -47,7 +63,7 @@ func (s *service) Deposit(req *CreateTransactionRequest) (*Transaction, error) {
 		UserId:         req.UserId,
 		IdempotencyKey: req.IdempotencyKey,
 		Amount:         req.Amount,
-		Type:           "DEPOSITE",
+		Type:           "DEPOSIT",
 		CreatedAt:      time.Now().UTC(),
 	}
 	tx, err := s.repo.Deposit(newTransaction)

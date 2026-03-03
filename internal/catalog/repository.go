@@ -17,7 +17,8 @@ type CatalogRepository interface {
 	GetActivePricingByEndpointId(endpointId int64) (*Pricing, error)
 	SetNewPrice(endpointId int64, newCost int64) error
 
-	GetFullRouteConfig(endpointId int64) (*RouteConfig, error)
+	GetRouteConfigById(endpointId int64) (*RouteConfig, error)
+	GetRouteConfigByNames(providerName, endpointName, endpointPath string) (*RouteConfig, error)
 	GetAllAvailableTools() ([]*ToolInfo, error)
 }
 
@@ -293,7 +294,7 @@ func (r *PostgresRepository) SetNewPrice(endpointId int64, newCost int64) error 
 	return tx.Commit()
 }
 
-func (r *PostgresRepository) GetFullRouteConfig(endpointId int64) (*RouteConfig, error) {
+func (r *PostgresRepository) GetRouteConfigById(endpointId int64) (*RouteConfig, error) {
 	config := new(RouteConfig)
 
 	query := `
@@ -307,6 +308,36 @@ func (r *PostgresRepository) GetFullRouteConfig(endpointId int64) (*RouteConfig,
 	`
 
 	err := r.db.QueryRow(query, endpointId).Scan(
+		&config.ProviderBaseUrl,
+		&config.EncryptedApiKey,
+		&config.EndpointPath,
+		&config.EndpointHttpMethod,
+		&config.Cost,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
+
+func (r *PostgresRepository) GetRouteConfigByNames(providerName, endpointName, endpointPath string) (*RouteConfig, error) {
+	config := new(RouteConfig)
+
+	query := `
+		SELECT P1.base_url, P1.encrypted_api_key, E.path, E.http_method, P2.cost 
+		FROM providers P1
+		INNER JOIN endpoints E ON P1.provider_id = E.provider_id
+		INNER JOIN pricings P2 ON P2.endpoint_id = E.endpoint_id
+		WHERE P1.is_active = TRUE 
+		  AND P2.is_current = TRUE
+		  AND P1.name = $1
+		  AND E.name = $2
+		  AND E.path = $3
+	`
+
+	err := r.db.QueryRow(query, providerName, endpointName, endpointPath).Scan(
 		&config.ProviderBaseUrl,
 		&config.EncryptedApiKey,
 		&config.EndpointPath,
