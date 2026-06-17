@@ -1,0 +1,75 @@
+\chapter{GIỚI THIỆU ĐỀ TÀI}
+
+\section{Đặt vấn đề}
+
+Các mô hình ngôn ngữ lớn hiện nay không chỉ được sử dụng để sinh văn bản, mà còn có thể được đặt trong các vòng lặp hành động để lập kế hoạch, gọi công cụ và tương tác với dịch vụ bên ngoài \cite{Yao2022ReAct,Schick2023Toolformer}. Khi được triển khai dưới dạng tác nhân AI, hệ thống có thể tự động chia nhiệm vụ thành nhiều bước, gọi API nhiều lần, đánh giá kết quả trung gian và thử lại khi gặp lỗi. Mỗi bước như vậy có thể phát sinh chi phí sử dụng dịch vụ.
+
+Điểm khác biệt của tác nhân AI so với người dùng thông thường nằm ở tính tự động và tốc độ thực thi. Một người dùng thường chủ động xác nhận từng thao tác có chi phí, trong khi một tác nhân AI có thể tạo nhiều yêu cầu liên tiếp hoặc đồng thời mà không có xác nhận thủ công ở từng bước. Nếu không có cơ chế kiểm soát ở giữa, một vòng lặp sai, một chiến lược thử lại không phù hợp hoặc nhiều lời gọi song song có thể nhanh chóng làm vượt ngân sách được cấp.
+
+Các nhà cung cấp dịch vụ AI thường tính phí theo mô hình, số token hoặc loại tài nguyên đã sử dụng. Chi phí thực tế chỉ được xác định sau khi yêu cầu hoàn tất. Nếu hệ thống chỉ ghi nhận chi phí sau khi nhận kết quả, nhiều yêu cầu đồng thời có thể cùng vượt qua bước kiểm tra số dư và làm phát sinh chi tiêu vượt mức. Việc lựa chọn mô hình theo chi phí có thể giảm tổng chi phí sử dụng \cite{Chen2023FrugalGPT}, nhưng chưa giải quyết đầy đủ nhu cầu kiểm soát ngân sách theo thời gian thực và truy vết hành vi của từng tác nhân AI.
+
+Từ thực tế đó, đề tài tập trung vào việc thiết kế và xây dựng một cổng tài chính thời gian thực cho tác nhân trí tuệ nhân tạo, được định vị là \textit{AI Agent Financial Gateway}. Asymptotic đóng vai trò trung gian giữa tác nhân AI bên ngoài và các nhà cung cấp dịch vụ AI trả phí. Tổ chức nạp tiền, đăng ký tác nhân và cấp khóa truy cập cho tác nhân trong hệ thống. Khi cần sử dụng mô hình AI, tác nhân gọi Gateway bằng khóa do Asymptotic cấp; Gateway kiểm tra định danh, chính sách và ngân sách trước khi định tuyến yêu cầu tới nhà cung cấp bằng thông tin xác thực nội bộ.
+
+\section{Bài toán cần giải quyết}
+
+Đề tài cần giải quyết bài toán kiểm soát chi phí tại thời điểm tác nhân AI thực thi yêu cầu. Hệ thống phải xác định tổ chức chịu chi phí, tác nhân tạo yêu cầu, khóa truy cập được sử dụng, phạm vi chính sách và ngân sách khả dụng trước khi cho phép yêu cầu tiếp tục.
+
+Các vấn đề chính bao gồm:
+
+\begin{description}
+    \item[Định danh tác nhân AI] Mỗi tác nhân bên ngoài cần được tổ chức đăng ký vào Gateway để có danh tính, khóa truy cập và lịch sử sử dụng riêng.
+    \item[Quản lý ngân sách] Tổ chức cần nạp tiền, phân bổ ngân sách và thiết lập hạn mức sử dụng cho từng tác nhân hoặc nhóm tác nhân.
+    \item[Kiểm soát trước khi phát sinh chi phí] Yêu cầu chỉ được chuyển tiếp tới nhà cung cấp khi thỏa mãn chính sách sử dụng và ngân sách khả dụng.
+    \item[Định tuyến an toàn tới nhà cung cấp] Tác nhân không dùng trực tiếp khóa của nhà cung cấp AI; Gateway gọi nhà cung cấp bằng thông tin xác thực do hệ thống quản lý.
+    \item[Truy vết hành vi và chi phí] Mỗi lần sử dụng dịch vụ cần được liên kết với tổ chức, tác nhân, nhà cung cấp, mô hình, chi phí và trạng thái xử lý.
+\end{description}
+
+Khó khăn cốt lõi nằm ở việc lời gọi tới nhà cung cấp có thời gian xử lý không xác định, trong khi ngân sách của tác nhân cần được kiểm soát nhất quán. Hệ thống phải hạn chế chi tiêu vượt mức, tránh ghi nhận trùng khi có yêu cầu lặp lại và giữ đủ thông tin để kiểm tra sau khi yêu cầu kết thúc.
+
+\section{Mục tiêu và phạm vi}
+
+Mục tiêu của đề tài là thiết kế và xây dựng nguyên mẫu \textit{AI Agent Financial Gateway}, đóng vai trò là cổng tài chính thời gian thực cho các yêu cầu sử dụng dịch vụ AI có tính phí do tác nhân AI tự động phát sinh. Nguyên mẫu hướng tới các mục tiêu sau:
+
+\begin{itemize}
+    \item Cung cấp một điểm vào thống nhất để tác nhân AI gọi dịch vụ AI trả phí thông qua Asymptotic;
+    \item Cho phép tổ chức đăng ký tác nhân, cấp khóa truy cập và quản lý lịch sử sử dụng;
+    \item Hỗ trợ nạp tiền, phân bổ ngân sách và thiết lập hạn mức hoặc chính sách sử dụng;
+    \item Ước lượng, kiểm tra chi phí và định tuyến yêu cầu tới nhà cung cấp AI bằng thông tin xác thực nội bộ;
+    \item Ghi nhận lịch sử yêu cầu, mức sử dụng và chi phí để phục vụ kiểm tra, báo cáo và đối soát.
+\end{itemize}
+
+Phạm vi triển khai hiện tại được giới hạn ở nguyên mẫu backend viết bằng Go, sử dụng PostgreSQL và bộ chuyển đổi cho giao diện OpenAI. Nguyên mẫu tập trung vào luồng cốt lõi: tác nhân AI gửi yêu cầu qua Gateway, Gateway xác thực, kiểm tra ngân sách, gọi nhà cung cấp và lưu lịch sử sử dụng.
+
+Hệ thống trong phạm vi đồ án không trực tiếp tạo ra tác nhân AI, không huấn luyện tác nhân AI, không cung cấp môi trường chạy agent và không tự động quyết định chiến lược hành động thay cho agent. Tác nhân AI được xem là phần mềm bên ngoài do lập trình viên xây dựng, sau đó được tổ chức đăng ký vào Gateway để được cấp quyền sử dụng dịch vụ có kiểm soát.
+
+Các chức năng thanh toán trực tuyến, hóa đơn, quyết toán production với nhà cung cấp AI, bảng điều khiển hoàn chỉnh, định tuyến nhiều mô hình và triển khai phân tán chưa thuộc phạm vi nguyên mẫu hoặc chỉ được mô hình hóa ở mức thiết kế.
+
+\section{Phương pháp thực hiện}
+
+Đề tài được thực hiện theo các bước:
+
+\begin{enumerate}
+    \item Khảo sát đặc điểm thực thi của tác nhân AI và rủi ro chi phí khi sử dụng dịch vụ AI trả phí;
+    \item Xác định actor, yêu cầu chức năng, yêu cầu phi chức năng và các trường hợp sử dụng của hệ thống;
+    \item Đặc tả các trường hợp sử dụng và mô hình hóa luồng nghiệp vụ chính;
+    \item Phân tích lớp theo hướng Boundary--Control--Entity để xác định trách nhiệm của các lớp phân tích;
+    \item Thiết kế gói, lớp thiết kế, tương tác, trạng thái, dữ liệu và giao diện API;
+    \item Triển khai, kiểm thử nguyên mẫu và đánh giá mức độ đáp ứng yêu cầu.
+\end{enumerate}
+
+\section{Bố cục đồ án}
+
+Đồ án gồm sáu chương:
+
+\begin{itemize}
+    \item Chương 1 giới thiệu vấn đề, bài toán cần giải quyết, mục tiêu, phạm vi và phương pháp thực hiện.
+    \item Chương 2 khảo sát hiện trạng, đặc tả yêu cầu, phân tích actor, phân tích và đặc tả các trường hợp sử dụng, đồng thời mô hình hóa luồng nghiệp vụ chính.
+    \item Chương 3 phân tích hướng đối tượng, trình bày cơ sở phân tích, nhận diện lớp phân tích, phân tích lớp biên, lớp điều khiển, lớp thực thể và đối chiếu lớp với use case.
+    \item Chương 4 trình bày thiết kế hướng đối tượng, bao gồm kiến trúc tổng thể, thiết kế gói, lớp, tương tác, trạng thái, dữ liệu và giao diện API.
+    \item Chương 5 mô tả môi trường triển khai, các chức năng đã triển khai, kiểm thử hệ thống, đánh giá kết quả và hạn chế triển khai.
+    \item Chương 6 nêu kết quả đạt được, hạn chế của đồ án và hướng phát triển.
+\end{itemize}
+
+\section*{Kết luận chương}
+
+Chương này đã xác định nhu cầu xây dựng một cổng tài chính thời gian thực dành riêng cho các yêu cầu do tác nhân AI tự động phát sinh. Trọng tâm của đề tài là kiểm soát định danh, hạn mức, ngân sách, chi phí và lịch sử sử dụng của tác nhân AI khi tương tác với các dịch vụ AI có tính phí. Các mục tiêu và phạm vi nêu trên là cơ sở để phân tích yêu cầu hệ thống trong Chương 2.

@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+title Đăng ký AI Agent và cấp API key
+
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam ArrowColor #475569
+
+start
+
+partition "Quản trị viên tổ chức / Lập trình viên" {
+  :Mở chức năng đăng ký AI Agent;
+  :Nhập thông tin Agent bên ngoài;
+}
+
+partition "Gateway" {
+  :Kiểm tra quyền trong tổ chức;
+
+  if (Có quyền đăng ký Agent?) then (Có)
+    :Kiểm tra thông tin Agent;
+  else (Không)
+    :Từ chối thao tác;
+    stop
+  endif
+
+  if (Thông tin hợp lệ?) then (Có)
+    :Tạo agent record;
+    :Gắn Agent với tổ chức;
+    :Thiết lập trạng thái hoạt động ban đầu;
+  else (Không)
+    :Yêu cầu điều chỉnh thông tin;
+    stop
+  endif
+
+  :Sinh API key do Asymptotic quản lý;
+  :Lưu bản băm API key;
+  :Gắn API key với Agent;
+  :Ghi nhận sự kiện bảo mật;
+}
+
+partition "Quản trị viên tổ chức / Lập trình viên" {
+  :Nhận API key một lần;
+  :Lưu API key để cấu hình Agent bên ngoài;
+}
+
+stop
+@enduml

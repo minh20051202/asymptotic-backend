@@ -1,0 +1,89 @@
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay,inner sep=0,outer sep=0]
+     \draw[maincolor,line width=4pt] ([xshift=-1.5cm,yshift=-3cm]current page.north east) coordinate(A)--([xshift=3cm,yshift=-3cm]current page.north west) coordinate(B)--([xshift=3cm,yshift=2cm]current page.south west) coordinate(C)--([xshift=-1.5cm,yshift=2cm]current page.south east) coordinate(D)--cycle;
+
+     \draw ([yshift=0.5cm,xshift=-0.5cm]A)-- ([yshift=0.5cm,xshift=0.5cm]B)--
+     ([yshift=-0.5cm,xshift=0.5cm]B) --([yshift=-0.5cm,xshift=-0.5cm]B)--([yshift=0.5cm,xshift=-0.5cm]C)--([yshift=0.5cm,xshift=0.5cm]C)--([yshift=-0.5cm,xshift=0.5cm]C)-- ([yshift=-0.5cm,xshift=-0.5cm]D)--([yshift=0.5cm,xshift=-0.5cm]D)--([yshift=0.5cm,xshift=0.5cm]D)--([yshift=-0.5cm,xshift=0.5cm]A)--([yshift=-0.5cm,xshift=-0.5cm]A)--([yshift=0.5cm,xshift=-0.5cm]A);
+     
+     \draw ([yshift=-0.3cm,xshift=0.3cm]A)-- ([yshift=-0.3cm,xshift=-0.3cm]B)--
+     ([yshift=0.3cm,xshift=-0.3cm]B) --([yshift=0.3cm,xshift=0.3cm]B)--([yshift=-0.3cm,xshift=0.3cm]C)--([yshift=-0.3cm,xshift=-0.3cm]C)--([yshift=0.3cm,xshift=-0.3cm]C)-- ([yshift=0.3cm,xshift=0.3cm]D)--([yshift=-0.3cm,xshift=0.3cm]D)--([yshift=-0.3cm,xshift=-0.3cm]D)--([yshift=0.3cm,xshift=-0.3cm]A)--([yshift=0.3cm,xshift=0.3cm]A)--([yshift=-0.3cm,xshift=0.3cm]A);
+   \end{tikzpicture}
+\begin{center}
+\LARGE ĐẠI HỌC BÁCH KHOA HÀ NỘI\\
+\vspace{7pt}
+\textbf{\LARGE KHOA TOÁN - TIN}
+\begin{figure}[!htb]
+    \centering
+    \includegraphics[width=6cm]{images/logo_fami.jpg}
+\end{figure}
+\end{center}
+
+\begin{center}
+    \vspace{5pt}
+    \textbf{\LARGE ĐỒ ÁN 1}\\
+    \vspace{15pt}
+    \textbf{\LARGE THIẾT KẾ VÀ XÂY DỰNG CỔNG TÀI CHÍNH THỜI GIAN THỰC CHO TÁC NHÂN TRÍ TUỆ NHÂN TẠO}
+
+    \Large
+    \vspace{4cm}
+\begin{tabular}{ll}
+Giảng viên hướng dẫn: & TS. Vương Mai Phương \\
+Sinh viên:             & Nguyễn Tuấn Minh \\
+Mã số sinh viên:       & 20237465
+\end{tabular}
+
+\end{center}
+
+\vspace{2cm}
+\begin{center}
+    \textbf{\Large HÀ NỘI, 06/2026}\\
+\end{center}
+\end{titlepage}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Mục lục}
+\tableofcontents
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Danh sách bảng}
+\listoftables
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Danh sách hình vẽ}
+\listoffigures
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Danh mục các ký hiệu và chữ viết tắt}
+\chapter*{Danh mục các ký hiệu và chữ viết tắt}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{|L{3.2cm}|L{9.2cm}|}
+\hline
+\centering\arraybackslash\textbf{Ký hiệu/Chữ viết tắt} & \centering\arraybackslash\textbf{Ý nghĩa} \\
+\hline
+AI & Trí tuệ nhân tạo \\
+\hline
+API & Giao diện lập trình ứng dụng \\
+\hline
+FR & Yêu cầu chức năng \\
+\hline
+NFR & Yêu cầu phi chức năng \\
+\hline
+HTTP & Giao thức truyền siêu văn bản \\
+\hline
+JSON & Định dạng trao đổi dữ liệu JavaScript Object Notation \\
+\hline
+JWT & Chuẩn mã thông báo dùng để xác thực và phân quyền \\
+\hline
+REST & Kiểu kiến trúc giao tiếp dịch vụ qua HTTP \\
+\hline
+UC & Trường hợp sử dụng \\
+\hline
+\end{tabular}
+\end{center}

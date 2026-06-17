@@ -1,0 +1,109 @@
+@startuml
+!theme plain
+
+title Design Class Diagram Overview - Asymptotic
+
+left to right direction
+hide circle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Arial"
+
+package "Presentation" #E0F2FE {
+  class GatewayHandler
+  class AdminHandler
+  class PaymentCallbackHandler
+  class ReportingHandler
+}
+
+package "Application Services" #FEF3C7 {
+  class AIRequestService
+  class AgentService
+  class APIKeyService
+  class BudgetService
+  class PolicyService
+  class ProviderRoutingService
+  class SettlementService
+  class WalletService
+  class TransactionService
+  class TraceService
+  class PaymentService
+  class ReportingService
+}
+
+package "Domain Entities" #DCFCE7 {
+  class Organization
+  class User
+  class Agent
+  class APIKey
+  class Wallet
+  class BudgetPolicy
+  class FinancialTransaction
+  class LedgerEntry
+  class PaymentTransaction
+  class AIProvider
+  class AIModel
+  class PricingPolicy
+  class IdempotencyRecord
+  class ExecutionTrace
+}
+
+package "Infrastructure" #F3E8FF {
+  interface OrganizationRepository
+  interface AgentRepository
+  interface APIKeyRepository
+  interface WalletRepository
+  interface TransactionRepository
+  interface ProviderRepository
+  interface TraceRepository
+  interface ProviderAdapter
+  interface PaymentAdapter
+}
+
+GatewayHandler --> AIRequestService
+AdminHandler --> AgentService
+AdminHandler --> APIKeyService
+AdminHandler --> WalletService
+AdminHandler --> ProviderRoutingService
+PaymentCallbackHandler --> PaymentService
+ReportingHandler --> ReportingService
+
+AIRequestService --> APIKeyService
+AIRequestService --> PolicyService
+AIRequestService --> BudgetService
+AIRequestService --> ProviderRoutingService
+AIRequestService --> SettlementService
+AIRequestService --> TraceService
+
+AgentService --> AgentRepository
+AgentService --> OrganizationRepository
+APIKeyService --> APIKeyRepository
+BudgetService --> WalletRepository
+BudgetService --> TransactionRepository
+PolicyService --> AgentRepository
+ProviderRoutingService --> ProviderRepository
+ProviderRoutingService --> ProviderAdapter
+SettlementService --> TransactionRepository
+SettlementService --> WalletRepository
+SettlementService --> TraceRepository
+WalletService --> WalletRepository
+TransactionService --> TransactionRepository
+PaymentService --> PaymentAdapter
+PaymentService --> WalletRepository
+ReportingService --> TransactionRepository
+ReportingService --> TraceRepository
+
+Organization "1" *-- "0..*" User
+Organization "1" *-- "0..*" Agent
+Organization "1" *-- "1" Wallet
+Agent "1" *-- "0..*" APIKey
+Agent "1" o-- "0..*" BudgetPolicy
+Wallet "1" o-- "0..*" FinancialTransaction
+FinancialTransaction "1" *-- "1..*" LedgerEntry
+FinancialTransaction "0..1" o-- "1" ExecutionTrace
+AIProvider "1" *-- "0..*" AIModel
+AIModel "1" o-- "1..*" PricingPolicy
+PaymentTransaction "0..1" --> FinancialTransaction
+
+@enduml

@@ -1,0 +1,43 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Người dùng" as User
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Lập trình viên" as Dev
+actor "AI Agent" as Agent
+actor "Quản trị viên\nhệ thống" as SysAdmin
+actor "Nhà cung cấp\ndịch vụ AI" as AIProvider
+actor "Nhà cung cấp\nthanh toán" as PaymentProvider
+
+rectangle "AI Agent Financial Gateway" {
+  usecase "UC01\nThực hiện yêu cầu AI" as UC01
+  usecase "UC02\nNạp tiền vào ví tổ chức" as UC02
+  usecase "UC03\nQuản lý ngân sách đội ngũ" as UC03
+  usecase "UC04\nĐăng ký và quản lý\ntác nhân AI" as UC04
+  usecase "UC05\nQuản lý API key\ncủa Agent" as UC05
+  usecase "UC06\nTheo dõi giao dịch\nvà mức độ sử dụng" as UC06
+  usecase "UC07\nĐăng ký tổ chức" as UC07
+  usecase "UC08\nQuản lý lập trình viên" as UC08
+  usecase "UC09\nQuản lý model, provider\nvà chính sách giá" as UC09
+}
+
+User -- UC07
+OrgAdmin -- UC02
+OrgAdmin -- UC03
+OrgAdmin -- UC06
+OrgAdmin -- UC08
+Dev -- UC04
+Dev -- UC05
+Dev -- UC06
+Agent -- UC01
+UC01 -- AIProvider
+UC02 -- PaymentProvider
+SysAdmin -- UC09
+@enduml

@@ -1,1 +1,26 @@
 .env
+/bin/
+
+# Local/generated caches
+.texlive/
+*.omp.cache
+omp.cache
+bash.*.omp.cache
+
+# LaTeX build artifacts
+/report/*.aux
+/report/*.bbl
+/report/*.blg
+/report/*.fdb_latexmk
+/report/*.fls
+/report/*.lof
+/report/*.log
+/report/*.lot
+/report/*.out
+/report/*.toc
+/report/*.synctex.gz
+/report/_minted-*/
+
+# Generated backups
+*.bak
+*.bkp

@@ -1,0 +1,67 @@
+@startuml
+!theme plain
+title Nạp tiền và phân bổ ngân sách
+
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam ArrowColor #475569
+
+start
+
+partition "Quản trị viên tổ chức" {
+  :Yêu cầu nạp tiền vào ví tổ chức;
+  :Nhập số tiền và phương thức thanh toán;
+}
+
+partition "Gateway" {
+  :Kiểm tra số tiền nạp;
+
+  if (Số tiền hợp lệ?) then (Có)
+    :Tạo giao dịch nạp tiền;
+    :Chuyển tới nhà cung cấp thanh toán;
+  else (Không)
+    :Từ chối yêu cầu nạp tiền;
+    stop
+  endif
+}
+
+partition "Payment Provider" {
+  :Xử lý thanh toán;
+  :Gửi kết quả thanh toán;
+}
+
+partition "Gateway" {
+  :Xác thực kết quả thanh toán;
+
+  if (Thanh toán thành công?) then (Có)
+    :Cộng tiền vào ví tổ chức;
+    :Ghi nhận giao dịch và bút toán;
+  else (Không)
+    :Giữ giao dịch ở trạng thái thất bại hoặc chờ đối soát;
+    stop
+  endif
+}
+
+partition "Quản trị viên tổ chức" {
+  :Chọn Agent hoặc nhóm nhận ngân sách;
+  :Nhập ngân sách cần phân bổ;
+}
+
+partition "Gateway" {
+  :Kiểm tra ngân sách khả dụng của tổ chức;
+
+  if (Ngân sách khả dụng đủ?) then (Có)
+    :Phân bổ budget cho Agent hoặc nhóm;
+    :Ghi lịch sử điều chuyển ngân sách;
+    :Thông báo phân bổ thành công;
+  else (Không)
+    :Từ chối phân bổ ngân sách;
+  endif
+}
+
+stop
+@enduml

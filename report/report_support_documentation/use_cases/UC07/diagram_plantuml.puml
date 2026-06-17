@@ -1,0 +1,18 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Người dùng" as User
+
+rectangle "AI Agent Financial Gateway" {
+  usecase "UC07\nĐăng ký tổ chức" as UC07
+}
+
+User -- UC07
+@enduml

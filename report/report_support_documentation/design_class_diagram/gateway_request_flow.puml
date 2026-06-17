@@ -1,0 +1,100 @@
+@startuml
+!theme plain
+
+title Design Class Diagram - Gateway Request Flow
+
+left to right direction
+hide circle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Arial"
+
+class GatewayHandler <<handler>> {
+  +handleAgentRequest()
+}
+
+class AIRequestService <<service>> {
+  +executeRequest()
+}
+
+class APIKeyService <<service>> {
+  +authenticate()
+}
+
+class IdempotencyService <<service>> {
+  +findOrCreate()
+  +storeResult()
+}
+
+class PolicyService <<service>> {
+  +validatePolicy()
+}
+
+class BudgetReservationService <<service>> {
+  +reserve()
+  +release()
+}
+
+class ProviderRouter <<service>> {
+  +selectProvider()
+}
+
+interface ProviderAdapter {
+  +sendRequest()
+}
+
+class SettlementService <<service>> {
+  +settleUsage()
+}
+
+class TraceService <<service>> {
+  +recordTrace()
+}
+
+interface APIKeyRepository
+interface IdempotencyRepository
+interface WalletRepository
+interface TransactionRepository
+interface ProviderRepository
+interface TraceRepository
+
+class Agent
+class APIKey
+class Wallet
+class BudgetPolicy
+class AIProvider
+class AIModel
+class FinancialTransaction
+class IdempotencyRecord
+class ExecutionTrace
+
+GatewayHandler --> AIRequestService
+AIRequestService --> APIKeyService
+AIRequestService --> IdempotencyService
+AIRequestService --> PolicyService
+AIRequestService --> BudgetReservationService
+AIRequestService --> ProviderRouter
+AIRequestService --> ProviderAdapter
+AIRequestService --> SettlementService
+AIRequestService --> TraceService
+
+APIKeyService --> APIKeyRepository
+APIKeyRepository ..> APIKey
+APIKey --> Agent
+IdempotencyService --> IdempotencyRepository
+IdempotencyRepository ..> IdempotencyRecord
+PolicyService --> BudgetPolicy
+BudgetReservationService --> WalletRepository
+BudgetReservationService --> TransactionRepository
+WalletRepository ..> Wallet
+TransactionRepository ..> FinancialTransaction
+ProviderRouter --> ProviderRepository
+ProviderRepository ..> AIProvider
+ProviderRepository ..> AIModel
+SettlementService --> TransactionRepository
+SettlementService --> WalletRepository
+TraceService --> TraceRepository
+TraceRepository ..> ExecutionTrace
+
+@enduml

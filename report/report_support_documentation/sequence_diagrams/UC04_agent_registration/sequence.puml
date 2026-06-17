@@ -1,0 +1,38 @@
+@startuml
+!theme plain
+
+title Sequence UC04 - Đăng ký AI Agent và cấp API key
+
+autonumber
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "Lập trình viên" as Dev
+participant "AdminHandler" as Handler
+participant "AgentService" as AgentService
+participant "APIKeyService" as KeyService
+participant "PolicyService" as Policy
+database "AgentRepository" as AgentRepo
+database "APIKeyRepository" as KeyRepo
+database "BudgetPolicyRepository" as PolicyRepo
+
+Dev -> Handler: yêu cầu đăng ký AI Agent bên ngoài
+Handler -> AgentService: registerAgent(agentInfo, organization)
+AgentService -> AgentRepo: kiểm tra quyền và tạo Agent
+AgentRepo --> AgentService: Agent đã tạo
+AgentService -> Policy: createDefaultPolicy(agent)
+Policy -> PolicyRepo: lưu policy/hạn mức ban đầu
+PolicyRepo --> Policy: policy đã lưu
+AgentService -> KeyService: issueKey(agent)
+KeyService -> KeyRepo: lưu keyHash và trạng thái
+KeyRepo --> KeyService: keyId
+KeyService --> AgentService: plaintext key một lần
+AgentService --> Handler: thông tin Agent + API key
+Handler --> Dev: trả API key để cấu hình Agent bên ngoài
+
+note over Dev,Handler
+Gateway chỉ đăng ký Agent bên ngoài và cấp API key.
+Hệ thống không tạo, huấn luyện hoặc vận hành Agent.
+end note
+
+@enduml

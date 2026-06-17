@@ -1,0 +1,26 @@
+@startuml
+!theme plain
+
+title State Machine - AI Request
+
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+[*] --> Received
+Received --> Authenticated: API key hợp lệ
+Received --> Rejected: API key không hợp lệ
+Authenticated --> PolicyChecked: policy hợp lệ
+Authenticated --> Rejected: policy vi phạm
+PolicyChecked --> BudgetReserved: ngân sách đủ
+PolicyChecked --> Rejected: vượt quota/budget
+BudgetReserved --> Routed: gọi AI Provider
+Routed --> Completed: provider trả kết quả
+Routed --> Failed: lỗi provider/lỗi mạng
+Failed --> PendingReconciliation: cần đối soát chi phí
+Failed --> Rejected: không phát sinh chi phí
+Completed --> [*]
+Rejected --> [*]
+PendingReconciliation --> Completed: đối soát xong
+PendingReconciliation --> [*]
+
+@enduml

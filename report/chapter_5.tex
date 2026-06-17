@@ -1,0 +1,25 @@
+\chapter{TRIỂN KHAI, KIỂM THỬ VÀ ĐÁNH GIÁ}
+
+Chương này trình bày môi trường triển khai, các chức năng đã hiện thực, phương pháp kiểm thử và đánh giá kết quả của hệ thống. Nội dung chi tiết sẽ được hoàn thiện sau khi phần thiết kế ở Chương 4 được chốt.
+
+\section{Môi trường và công nghệ triển khai}
+
+% Backend của hệ thống được triển khai bằng Go, sử dụng PostgreSQL làm hệ quản trị cơ sở dữ liệu quan hệ. Go được dùng để xây dựng HTTP server, xử lý request đồng thời và điều phối logic nghiệp vụ của Gateway. PostgreSQL được dùng để lưu trữ tổ chức, tác nhân AI, API key, ví, giao dịch tài chính, ledger entry và execution trace.
+
+% \textit{Placeholder: Bổ sung bảng môi trường triển khai chi tiết, bao gồm phiên bản Go, framework/router, thư viện kết nối cơ sở dữ liệu, công cụ migration, công cụ kiểm thử, biến môi trường cần cấu hình và cách chạy hệ thống trong môi trường thử nghiệm.}
+
+\section{Các chức năng đã triển khai}
+
+% \textit{Placeholder: Liệt kê các chức năng đã triển khai theo UC01--UC09. Với mỗi chức năng, nêu phạm vi đã hoàn thành, endpoint hoặc module liên quan và giới hạn hiện tại nếu có.}
+
+\section{Kiểm thử hệ thống}
+
+% \textit{Placeholder: Trình bày chiến lược kiểm thử gồm kiểm thử đơn vị, kiểm thử tích hợp, kiểm thử API và các kịch bản nghiệp vụ chính. Cần có các ca kiểm thử cho luồng tài chính như nạp tiền, giữ chỗ ngân sách, quyết toán, xử lý lỗi provider và idempotency.}
+
+\section{Đánh giá kết quả}
+
+% \textit{Placeholder: Đánh giá mức độ đáp ứng yêu cầu chức năng, yêu cầu phi chức năng, hiệu quả kiểm soát chi phí, khả năng truy vết và kết quả kiểm thử chính.}
+
+\section{Hạn chế triển khai}
+
+% \textit{Placeholder: Nêu các hạn chế còn tồn tại trong phạm vi nguyên mẫu, ví dụ chưa tích hợp đầy đủ payment provider production, chưa triển khai settlement production với AI Provider, chưa tối ưu hiệu năng streaming, chưa có dashboard quản trị hoàn chỉnh hoặc chưa có cơ chế cảnh báo ngân sách nâng cao.}

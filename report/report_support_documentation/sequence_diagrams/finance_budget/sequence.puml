@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+
+title Sequence - Nạp tiền và phân bổ ngân sách
+
+autonumber
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "Quản trị viên tổ chức" as Admin
+participant "AdminHandler" as Handler
+participant "PaymentService" as Payment
+participant "PaymentAdapter" as PaymentProvider
+participant "PaymentCallbackHandler" as Callback
+participant "WalletService" as Wallet
+participant "LedgerService" as Ledger
+participant "BudgetAllocationService" as Budget
+database "PaymentTransactionRepository" as PaymentRepo
+database "WalletRepository" as WalletRepo
+database "LedgerEntryRepository" as LedgerRepo
+database "BudgetPolicyRepository" as PolicyRepo
+
+Admin -> Handler: tạo yêu cầu nạp tiền
+Handler -> Payment: createTopUp(amount)
+Payment -> PaymentRepo: lưu PaymentTransaction(Pending)
+Payment -> PaymentProvider: tạo phiên thanh toán
+PaymentProvider --> Payment: paymentUrl/reference
+Payment --> Handler: paymentUrl
+Handler --> Admin: chuyển tới nhà cung cấp thanh toán
+
+PaymentProvider -> Callback: callback kết quả thanh toán
+Callback -> Payment: confirmCallback(reference, signature)
+Payment -> PaymentRepo: kiểm tra giao dịch chưa xử lý
+Payment -> Wallet: creditWallet(organization, amount)
+Wallet -> WalletRepo: cộng số dư ví
+Wallet -> Ledger: appendTopUpEntry()
+Ledger -> LedgerRepo: ghi bút toán nạp tiền
+Payment -> PaymentRepo: đánh dấu thành công
+
+Admin -> Handler: phân bổ ngân sách cho Agent/lập trình viên
+Handler -> Budget: allocateBudget(target, amount)
+Budget -> WalletRepo: kiểm tra ngân sách khả dụng
+Budget -> PolicyRepo: lưu BudgetPolicy
+Budget -> LedgerRepo: ghi bút toán điều chuyển
+Budget --> Handler: phân bổ thành công
+Handler --> Admin: hiển thị ngân sách mới
+
+@enduml

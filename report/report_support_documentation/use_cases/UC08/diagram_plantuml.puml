@@ -1,0 +1,29 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+
+rectangle "AI Agent Financial Gateway" {
+  usecase "UC08.1\nXem danh sách\nlập trình viên" as UC081
+  usecase "UC08.2\nTạo tài khoản\nlập trình viên" as UC082
+  usecase "UC08.3\nCập nhật thông tin\nlập trình viên" as UC083
+  usecase "UC08.4\nVô hiệu hóa\nlập trình viên" as UC084
+  usecase "UC08.5\nXem chi tiết\nlập trình viên" as UC085
+  usecase "UC05.3\nThu hồi API key" as UC053
+}
+
+OrgAdmin -- UC081
+OrgAdmin -- UC082
+OrgAdmin -- UC083
+OrgAdmin -- UC084
+
+UC085 ..> UC081 : <<extend>>
+UC084 ..> UC053 : <<include>>
+@enduml

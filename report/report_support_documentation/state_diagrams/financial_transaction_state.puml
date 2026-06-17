@@ -1,0 +1,23 @@
+@startuml
+!theme plain
+
+title State Machine - Financial Transaction
+
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+[*] --> Pending
+Pending --> Reserved: tạm giữ ngân sách
+Pending --> Settled: top-up hoặc phân bổ thành công
+Pending --> Failed: dữ liệu không hợp lệ
+Reserved --> Settled: quyết toán chi phí thực tế
+Reserved --> Released: hủy request hoặc không phát sinh chi phí
+Reserved --> PendingReconciliation: lỗi khi provider đã có thể phát sinh chi phí
+Settled --> Reversed: hoàn trả/điều chỉnh
+Failed --> [*]
+Released --> [*]
+Reversed --> [*]
+PendingReconciliation --> Settled: đối soát xác nhận chi phí
+PendingReconciliation --> Released: đối soát xác nhận không tính phí
+
+@enduml

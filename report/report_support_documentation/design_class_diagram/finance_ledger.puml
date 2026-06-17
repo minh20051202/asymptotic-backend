@@ -1,0 +1,101 @@
+@startuml
+!theme plain
+
+title Design Class Diagram - Finance And Ledger
+
+left to right direction
+hide circle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Arial"
+
+class WalletService <<service>> {
+  +getBalance()
+  +creditWallet()
+}
+
+class BudgetAllocationService <<service>> {
+  +allocateBudget()
+  +revokeBudget()
+}
+
+class BudgetReservationService <<service>> {
+  +reserveBudget()
+  +releaseReservation()
+}
+
+class TransactionService <<service>> {
+  +createTransaction()
+  +markStatus()
+}
+
+class LedgerService <<service>> {
+  +appendEntry()
+}
+
+class PaymentService <<service>> {
+  +createTopUp()
+  +confirmCallback()
+}
+
+interface WalletRepository
+interface BudgetPolicyRepository
+interface FinancialTransactionRepository
+interface LedgerEntryRepository
+interface PaymentTransactionRepository
+interface PaymentAdapter
+
+class Wallet {
+  +balance
+  +reservedBalance
+}
+
+class BudgetPolicy {
+  +limitAmount
+  +spentAmount
+}
+
+class FinancialTransaction {
+  +amount
+  +status
+  +type
+}
+
+class LedgerEntry {
+  +amount
+  +entryType
+}
+
+class PaymentTransaction {
+  +providerReference
+  +status
+}
+
+WalletService --> WalletRepository
+WalletService --> LedgerService
+BudgetAllocationService --> WalletRepository
+BudgetAllocationService --> BudgetPolicyRepository
+BudgetAllocationService --> TransactionService
+BudgetReservationService --> WalletRepository
+BudgetReservationService --> TransactionService
+TransactionService --> FinancialTransactionRepository
+TransactionService --> LedgerService
+LedgerService --> LedgerEntryRepository
+PaymentService --> PaymentAdapter
+PaymentService --> PaymentTransactionRepository
+PaymentService --> WalletService
+PaymentService --> TransactionService
+
+WalletRepository ..> Wallet
+BudgetPolicyRepository ..> BudgetPolicy
+FinancialTransactionRepository ..> FinancialTransaction
+LedgerEntryRepository ..> LedgerEntry
+PaymentTransactionRepository ..> PaymentTransaction
+
+Wallet "1" o-- "0..*" BudgetPolicy
+Wallet "1" o-- "0..*" FinancialTransaction
+FinancialTransaction "1" *-- "1..*" LedgerEntry
+PaymentTransaction "0..1" --> FinancialTransaction
+
+@enduml

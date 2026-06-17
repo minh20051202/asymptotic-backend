@@ -1,0 +1,75 @@
+@startuml
+!theme plain
+title UC01 - Agent gọi AI qua Gateway
+
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam ArrowColor #475569
+
+start
+
+partition "AI Agent" {
+  :Gửi yêu cầu AI tới Gateway;
+}
+
+partition "Gateway" {
+  :Tiếp nhận request;
+  :Xác thực API key;
+
+  if (API key hợp lệ?) then (Có)
+    :Xác định AI Agent và tổ chức chịu phí;
+  else (Không)
+    :Từ chối yêu cầu;
+    stop
+  endif
+
+  :Kiểm tra trạng thái Agent;
+
+  if (Agent được phép hoạt động?) then (Có)
+    :Kiểm tra policy và quota;
+  else (Không)
+    :Từ chối yêu cầu;
+    stop
+  endif
+
+  if (Đáp ứng policy/quota?) then (Có)
+    :Ước lượng chi phí;
+    :Kiểm tra ngân sách khả dụng;
+  else (Không)
+    :Từ chối yêu cầu;
+    stop
+  endif
+
+  if (Ngân sách đủ?) then (Có)
+    :Tạm giữ ngân sách;
+    :Chọn provider/model phù hợp;
+  else (Không)
+    :Từ chối yêu cầu;
+    stop
+  endif
+}
+
+partition "AI Provider" {
+  :Xử lý yêu cầu AI;
+  :Trả kết quả và usage metadata;
+}
+
+partition "Gateway" {
+  if (Provider trả kết quả thành công?) then (Có)
+    :Ghi usage, cost và trace;
+    :Quyết toán chi phí;
+    :Giải phóng phần ngân sách còn dư;
+    :Trả response cho AI Agent;
+  else (Không)
+    :Ghi trace lỗi;
+    :Giải phóng hoặc chuyển giao dịch sang chờ đối soát;
+    :Trả lỗi rõ ràng cho AI Agent;
+  endif
+}
+
+stop
+@enduml

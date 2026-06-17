@@ -1,0 +1,373 @@
+\PassOptionsToPackage{table,xcdraw}{xcolor}
+   \usepackage[
+	top = 3 cm, 
+	right = 2 cm, 
+	left = 3.5 cm, 
+	bottom = 3 cm
+]{geometry}
+
+\usepackage{iftex}
+\ifPDFTeX
+    \usepackage[utf8]{inputenc}
+    \IfFileExists{t5enc.def}{
+        \usepackage[T5]{fontenc}
+        \IfFileExists{urwvn.map}{\pdfmapfile{+urwvn.map}}{}
+    }{
+        \PackageError{report}
+        {Missing Vietnamese TeX support: t5enc.def}
+        {Install the Vietnamese/other-language TeX package, e.g. `sudo apt install texlive-lang-other`, then rebuild with latexmk.}
+    }
+\else
+    \usepackage{fontspec}
+    \setmainfont{TeX Gyre Termes}
+    \setsansfont[Scale=0.92]{TeX Gyre Heros}
+    \setmonofont{Latin Modern Mono}
+\fi
+\usepackage[main=vietnamese,provide=*]{babel}
+\usepackage{textcomp} 
+\ifPDFTeX
+    \usepackage[scaled=0.92]{helvet}
+    \renewcommand{\rmdefault}{ptm}
+\fi
+
+\usepackage{cite}
+\usepackage{bibentry}
+\usepackage{url}
+\usepackage{hyperref}
+
+
+\usepackage{upquote}
+\usepackage{amsmath}
+\usepackage[capitalise,nameinlink,noabbrev]{cleveref}
+\crefname{chapter}{Chương}{Chương}
+\crefname{section}{Mục}{Mục}
+\crefname{subsection}{Mục}{Mục}
+\crefname{figure}{Hình}{Hình}
+\crefname{table}{Bảng}{Bảng}
+\Crefname{chapter}{Chương}{Chương}
+\Crefname{section}{Mục}{Mục}
+\Crefname{subsection}{Mục}{Mục}
+\Crefname{figure}{Hình}{Hình}
+\Crefname{table}{Bảng}{Bảng}
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usepackage{algorithm}
+\floatname{algorithm}{Thuật toán}
+\usepackage{booktabs} 
+\usepackage{makecell}
+
+\usepackage{listings}
+
+
+\renewcommand{\listalgorithmname}{Danh sách thuật toán}
+\usepackage{algpseudocode}	
+\usepackage{amssymb}
+\IfFileExists{fontawesome5.sty}{
+    \usepackage{fontawesome5}
+}{
+    \newcommand{\faFolderOpen}{\textbf{[Folder]}}
+}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\ifPDFTeX
+    \usepackage{mathptmx}
+\else
+    \usepackage{unicode-math}
+    \setmathfont{TeX Gyre Termes Math}
+\fi
+\usepackage{xurl}
+\usepackage{rotating}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,skins,breakable}
+
+\usepackage{listings}
+\usepackage{caption}
+\captionsetup{width=\textwidth}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\setlength{\emergencystretch}{2em}
+
+\setlist[enumerate]{itemsep=0pt,topsep=0pt}
+\setlist[itemize]{itemsep=0pt,topsep=0pt}
+\usepackage{subcaption}
+% Thiết lập khoảng cách giữa môi trường enumerate và các đoạn khác
+% \setlength{\topsep}{0pt}
+% \setlength{\partopsep}{0pt}
+
+% Thiết lập khoảng cách giữa môi trường itemize và các đoạn khác
+% \setlength{\topsep}{0pt plus 1pt minus 1pt}
+% \setlength{\partopsep}{0pt plus 1pt minus 1pt}
+
+
+\usepackage{parskip}
+\setlength{\parskip}{5pt} 
+\setlength{\parindent}{1.25cm}
+
+\usepackage{listings}
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{blue},
+    stringstyle=\color{orange},
+    commentstyle=\color{green!70!black},
+    morecomment=[l][\color{magenta}]{\#},
+    frame=single,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    tabsize=4,
+    showstringspaces=false,
+    captionpos=b,
+    xleftmargin=\parindent,
+}
+
+\makeatletter
+\g@addto@macro\normalsize{%
+  \setlength\abovedisplayskip     {0pt}
+  \setlength\belowdisplayskip     {0pt}
+  \setlength\abovedisplayshortskip{0pt}
+  \setlength\belowdisplayshortskip{0pt}
+}
+\makeatother
+
+\setlength{\jot}{0pt}
+
+\numberwithin{equation}{chapter}
+
+\usepackage{xcolor}
+\definecolor{maincolor}{RGB}{0, 105, 166}
+\definecolor{lightgray}{RGB}{242, 242, 242}
+\definecolor{olivegreen}{rgb}{0.33, 0.42, 0.18}
+
+
+\usepackage{tabu}
+
+\usepackage{framed}
+\definecolor{shadecolor}{named}{lightgray}
+
+\newcommand{\maincolorit}[1]{{\color{maincolor}\textit{#1}}}
+\newcommand{\maincolorbf}[1]{{\color{maincolor}\textbf{#1}}}
+\newcommand{\maincolor}  [1]{{\color{maincolor} #1}}
+\newcommand{\red}        [1]{{\color{red} #1}}
+
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+\usetikzlibrary{calc,math}
+\usepackage{tasks}
+
+\usepackage{thmtools}
+
+\tcbuselibrary{most}
+\tcbset{
+	customstyle/.style={
+  		breakable,
+  		enhanced,
+  		outer arc = 4pt,
+  		arc       = 4pt,
+  		%colframe  = maincolor,
+  		%colback   = maincolor!12,
+		colback   = gray!10!white,
+  		attach boxed title to top left,
+		drop fuzzy shadow,
+  		boxed title style = {
+  		  	colback   = maincolor,
+  		  	outer arc = 4pt,
+  		  	arc       = 0pt,
+  		  	top       = 1pt,
+  		  	bottom    = 1pt,
+  		},
+  		fonttitle = \bfseries
+  	}
+}
+
+% Định nghĩa tcolorbox mà không có tiêu đề mặc định
+\newtcolorbox{tomlquotebox}[1][]{
+    customstyle,
+    colframe=maincolor,
+    fonttitle=\bfseries,
+    #1
+}
+
+% Sử dụng gói lệnh minted để định dạng đoạn code
+\usepackage{minted}
+
+% Định nghĩa một môi trường để chứa đoạn văn bản TOML
+\newenvironment{tomlcode}
+{\minted[
+    breaklines=true,
+    style=tango,
+    linenos=false,
+    fontsize=\footnotesize
+]{toml}}
+{\endminted}
+
+\newtcolorbox[auto counter, number within = chapter]{theorembox}[1][]{
+  	customstyle,
+  	title = Tập thuộc tính ,
+  	overlay unbroken and first = {
+      	\path
+        let
+        \p1 = (title.north east),
+        \p2 = (frame.north east)
+        in
+        node[
+			anchor = west, 
+			color  = maincolor, 
+			text width = \x2 - \x1
+		] 
+        at (title.east) {\faFolderOpen~\textit{#1}}; %Ký hiệu ở đây
+    }
+}
+\colorlet{tcbcol@back}{tcbcolback}
+\colorlet{tcbcol@frame}{tcbcolframe}
+\newtcolorbox{note}[1][]{
+    enhanced,
+	before skip = 2mm,
+    after skip  = 3mm,
+	boxrule     = 0pt,
+    left        = 5mm,
+    right       = 2mm,
+    top         = 1mm,
+    bottom      = 1mm,
+	colback     = gray!10!white,
+	colframe    = white,
+	sharp corners, 
+    rounded corners = southeast,
+    arc is angular,
+    arc         = 3mm,
+	underlay = {%
+		\path[fill = tcbcol@back!80!white] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+		\path[draw = tcbcol@frame, shorten <= -0.05mm, shorten >= -0.05mm] ([yshift=3mm]interior.south east)--++(-0.4,-0.1)--++(0.1,-0.2);
+		\path[fill = maincolor, draw = none] (interior.south west) rectangle node[white]{\huge\bfseries !}
+		([xshift=4mm]interior.north west);
+	},
+	drop fuzzy shadow, #1}
+
+\newtcolorbox[auto counter, number within = chapter]{examplebox}{
+	breakable,
+	enhanced,
+	colback      = gray!10!white,
+	boxrule      = 0pt,
+	arc          = 0pt,
+	outer arc    = 0pt,
+	title        = Ví dụ~\thetcbcounter,
+	fonttitle    = \bfseries,
+	coltitle     = white,
+	colbacktitle = white,
+	colframe     = white,
+	title style  = maincolor,
+	drop fuzzy shadow,
+	overlay = {
+	  	\draw[line width = 2pt, maincolor] 
+			(frame.south west) -- (frame.south east);
+	}
+}
+\usepackage{footnote}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[CO]{
+	\noindent 
+	\tikz[baseline]{
+		\draw[line width = 0.4mm, maincolor] (-10,0) -- (5,0);
+		\draw[fill = maincolor, draw = maincolor] 
+			(5-0.8,0)--(5.3-0.8,0.3)--(6.5-0.8,0.3)--(6.2-0.8,0)--(6.5-0.8,-0.3)--(5.3-0.8,-0.3)--cycle; 
+		\draw[fill = maincolor!50!white, draw = maincolor!50!white] 
+			(6.35-0.8,0)--(6.65-0.8,0.3)--(6.85-0.8,0.3)--(6.55-0.8,0)--(6.85-0.8,-0.3)--(6.65-0.8,-0.3)--cycle;
+		\draw[fill = maincolor, draw = maincolor]
+			(6.7-0.8,0)--(7-0.8,0.3)--(9.5-0.8,0.3)--(9.5-0.8,-0.3)--(7-0.8,-0.3)--cycle; 
+		\node at (5.2-0.8,0.02)[anchor = west]{\color{white}\textbf{\thepage}};
+		%\node at (-10,-0.5)[anchor = west]{\color{white}Mẫu \LaTeX\, này được thiết kế bởi Lê Nguyên Bách 20195841};
+	}
+}
+\fancyfoot[CE]{
+	\noindent 
+	\tikz[baseline, overlay, remember picture]{
+		%\node at (15,0) {\,};
+		\draw[line width = 0.4mm, maincolor] (-6.2,0) -- (8,0);
+		\draw[fill = maincolor, draw = maincolor] 
+			(-5-1.2,0)--(-5.3-1.2,0.3)--(-6.5-1.2,0.3)--(-6.2-1.2,0)--(-6.5-1.2,-0.3)--(-5.3-1.2,-0.3)--cycle;
+		\draw[fill = maincolor!50!white, draw = maincolor!50!white] 
+			(-6.35-1.2,0)--(-6.65-1.2,0.3)--(-6.85-1.2,0.3)--(-6.55-1.2,0)--(-6.85-1.2,-0.3)--(-6.65-1.2,-0.3)--cycle;
+		\draw[fill = maincolor, draw = maincolor]
+			(-6.7-1.2,0)--(-7-1.2,0.3)--(-9.5-1.2,0.3)--(-9.5-1.2,-0.3)--(-7-1.2,-0.3)--cycle; 
+		\node at (-6.4,0.02)[anchor = east]{\color{white}\textbf{\thepage}};
+		%\node at (8.8,-0.5) [anchor = east]{\color{white}Mẫu \LaTeX\, này được thiết kế bởi Lê Nguyên Bách 20195841};
+	}
+}
+
+\fancypagestyle{plain}{%
+\fancyfoot[CO]{
+	\noindent 
+	\tikz[baseline]{
+		\draw[line width = 0.4mm, maincolor] (-10,0) -- (5,0);
+		\draw[fill = maincolor, draw = maincolor] 
+			(5-0.8,0)--(5.3-0.8,0.3)--(6.5-0.8,0.3)--(6.2-0.8,0)--(6.5-0.8,-0.3)--(5.3-0.8,-0.3)--cycle; 
+		\draw[fill = maincolor!50!white, draw = maincolor!50!white] 
+			(6.35-0.8,0)--(6.65-0.8,0.3)--(6.85-0.8,0.3)--(6.55-0.8,0)--(6.85-0.8,-0.3)--(6.65-0.8,-0.3)--cycle;
+		\draw[fill = maincolor, draw = maincolor]
+			(6.7-0.8,0)--(7-0.8,0.3)--(9.5-0.8,0.3)--(9.5-0.8,-0.3)--(7-0.8,-0.3)--cycle; 
+		\node at (5.2-0.8,0.02)[anchor = west]{\color{white}\textbf{\thepage}};
+		%\node at (-10,-0.5)[anchor = west]{\color{white}Mẫu \LaTeX\, này được thiết kế bởi Lê Nguyên Bách 20195841};
+	}
+}
+\fancyfoot[CE]{
+	\noindent 
+	\tikz[baseline, overlay, remember picture]{
+		%\node at (15,0) {\,};
+		\draw[line width = 0.4mm, maincolor] (-6.2,0) -- (8,0);
+		\draw[fill = maincolor, draw = maincolor] 
+			(-5-1.2,0)--(-5.3-1.2,0.3)--(-6.5-1.2,0.3)--(-6.2-1.2,0)--(-6.5-1.2,-0.3)--(-5.3-1.2,-0.3)--cycle;
+		\draw[fill = maincolor!50!white, draw = maincolor!50!white] 
+			(-6.35-1.2,0)--(-6.65-1.2,0.3)--(-6.85-1.2,0.3)--(-6.55-1.2,0)--(-6.85-1.2,-0.3)--(-6.65-1.2,-0.3)--cycle;
+		\draw[fill = maincolor, draw = maincolor]
+			(-6.7-1.2,0)--(-7-1.2,0.3)--(-9.5-1.2,0.3)--(-9.5-1.2,-0.3)--(-7-1.2,-0.3)--cycle; 
+		\node at (-6.4,0.02)[anchor = east]{\color{white}\textbf{\thepage}};
+		%\node at (8.8,-0.5) [anchor = east]{\color{white}Mẫu \LaTeX\, này được thiết kế bởi Lê Nguyên Bách 20195841};
+	}
+}
+}
+
+\renewcommand{\headrulewidth}{0pt}
+
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks  = true,
+    citecolor   = maincolor!90,
+    linkcolor   = maincolor,
+    filecolor   = magenta,      
+    urlcolor    = maincolor,
+}
+
+\renewcommand{\labelitemi}{$\textcolor{maincolor}{\bullet}$}
+\renewcommand{\labelitemii}{$\textcolor{maincolor}{\cdot}$}
+\renewcommand{\labelitemiii}{$\textcolor{maincolor}{\diamond}$}
+\renewcommand{\labelitemiv}{$\textcolor{maincolor}{\ast}$}
+
+
+\usepackage[explicit]{titlesec}
+\titleformat{\chapter}[display]
+    {\normalfont\Large\rmfamily}
+    {\flushright\fontsize{60}{0}\textbf{\textcolor{maincolor}{{\huge\chaptername}~\thechapter\vskip0pt\rule{\textwidth}{2pt}}}}{0pt}
+    {\flushleft\fontsize{30}{0}{\maincolor{\textbf{#1}}}\vskip 10pt}
+\titlespacing*{\chapter}
+    {0pt}{-40pt}{0pt}
+
+
+\titleformat{\section}
+{\color{maincolor}\normalfont\Large\bfseries}
+{\color{maincolor}\thesection}{5pt}{\color{maincolor}#1}
+
+% Subsection title style 
+\titleformat{\subsection}
+{\color{maincolor}\normalfont\large\bfseries}
+{\color{maincolor}\thesubsection}{5pt}{\color{maincolor}#1}
+
+% Subsubsection title style 
+\titleformat{\subsubsection}
+{\color{maincolor}\normalfont\normalsize\bfseries}
+{\color{maincolor}\thesubsubsection}{5pt}{\color{maincolor}#1}

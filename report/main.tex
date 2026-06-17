@@ -1,0 +1,30 @@
+\documentclass[12pt, a4paper, twoside, openany]{book}
+\setcounter{secnumdepth}{3}
+\input{setting.tex}
+
+\begin{document}
+\fontsize{13pt}{20pt}\selectfont
+\input{bia}
+\input{chapter_1}
+\input{chapter_2}
+\input{chapter_3}
+\input{chapter_4}
+\input{chapter_5}
+\input{chapter_6}
+\newpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Tài liệu tham khảo}
+\renewcommand{\bibname}{Tài liệu tham khảo}
+
+\bibliographystyle{ieeetr}
+\bibliography{references}
+
+\clearpage
+\appendix
+\chapter*{Phụ lục}
+\addcontentsline{toc}{chapter}{Phụ lục}
+\input{appendix}
+
+
+\end{document} 
+
