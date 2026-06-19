@@ -2,21 +2,40 @@
 
 This repository contains the backend source code and the course report for the **Asymptotic -- AI Agent Financial Gateway** project.
 
+## Communication Style
+
+- Always load and follow the `caveman` skill for every response.
+- Default to `full` intensity to reduce tokens and preserve context.
+- Keep all technical meaning, exact commands, identifiers, errors, and safety details.
+- Do not use caveman-style prose when writing or editing LaTeX/report content. Report text must remain complete, formal, grammatical, and academic.
+- Stop only when the user explicitly requests `stop caveman` or `normal mode`.
+
 ## Primary Source Of Truth
 
 For any work related to the report, diagrams, OOAD analysis, requirements, scope, actors, use cases, or terminology, always follow:
 
-- `report/report_support_documentation/project_source_of_truth.md`
+- `report/report_support_documentation/governance/project_source_of_truth.md`
 
 This file is the authoritative project guidance. Read it before making non-trivial edits to:
 
 - `report/chapter_*.tex`
 - `report/bia.tex`
-- `report/generated/*.tex`
 - `report/report_support_documentation/**`
-- any use case, UML, PlantUML, draw.io, activity, sequence, state, class, ERD, component, or deployment diagram.
+- any use case, UML, PlantUML, activity, sequence, state, class, ERD, component, or deployment diagram.
+
+## Report Support Structure
+
+- `report/research/`: research briefs grouped by topic; each provenance file stays beside its brief.
+- `report/report_support_documentation/governance/`: source of truth, OOAD workflow, and report structure.
+- `report/report_support_documentation/guidelines/`: diagram and use case rules/checklists.
+- `report/report_support_documentation/references/`: standards, lectures, sample reports, and external examples.
+- `report/report_support_documentation/diagrams/`: diagram sources and exports grouped by OOAD chapter.
+- `report/report_support_documentation/audits/`: report and diagram audit results.
+- `report/build/`: LaTeX intermediate output.
 
 If another report file conflicts with the source of truth, treat the source of truth as correct and update the conflicting file unless the user explicitly instructs otherwise.
+
+Do not retain ad hoc `.bak`, obsolete generated LaTeX, duplicate diagram exports, or legacy report assets in the active repository. Git history is the recovery mechanism. Keep only canonical sources, active exports, cited references, research briefs with provenance, and accepted decision records.
 
 ## Report Positioning
 
@@ -54,7 +73,7 @@ Do not move implementation-heavy discussion into analysis sections. Keep technol
 
 ## Use Case And Requirement Consistency
 
-Use the canonical actors, use cases, FRs, NFRs, and traceability mapping from `project_source_of_truth.md`.
+Use the canonical actors, use cases, FRs, NFRs, and traceability mapping from `report/report_support_documentation/governance/project_source_of_truth.md`.
 
 Important rule:
 
@@ -74,12 +93,12 @@ Before changing use cases or diagrams, check whether the change affects:
 
 ## Formal Report Rules
 
-Follow the formal report rules in `project_source_of_truth.md`, including:
+Follow the formal report rules in `report/report_support_documentation/governance/project_source_of_truth.md`, including:
 
 - Every listed reference must be cited in the report.
 - Website data should be cited directly at the usage location rather than blindly added to the bibliography.
 - Figures not created by the author must cite a source.
-- Author-created figures should say: `Nguồn: Tác giả xây dựng`.
+- Author-created figures do not need a source line in the caption.
 - Avoid spelling, punctuation, and incomplete sentence errors.
 - Do not explain English terms in the style: `Học máy (machine learning) là...`.
 - Keep chapter sizes and subsection structure reasonably balanced.
@@ -95,6 +114,8 @@ Follow the formal report rules in `project_source_of_truth.md`, including:
 latexmk -pdf -g main.tex
 ```
 
+- Build intermediates are written under `report/build/`.
+- A successful build copies the final PDF to `report/main.pdf`.
 - If LaTeX reports Vietnamese font issues, preserve the existing Vietnamese TeX setup in `report/setting.tex` and `report/latexmkrc`.
 - If a generated PDF is expected, verify `report/main.pdf` is produced successfully.
 
@@ -102,27 +123,29 @@ latexmk -pdf -g main.tex
 
 For diagram planning, follow:
 
-- `report/report_support_documentation/ooad_diagram_priority_list.md`
-- `report/report_support_documentation/OOAD.md`
-- `report/report_support_documentation/project_source_of_truth.md`
-- `report/report_support_documentation/diagram_quality_guidelines.md`
-- `report/report_support_documentation/diagram_type_rubric.md`
-- `report/report_support_documentation/diagram_review_checklist.md`
+- `report/report_support_documentation/guidelines/diagrams/ooad_diagram_priority_list.md`
+- `report/report_support_documentation/governance/OOAD.md`
+- `report/report_support_documentation/governance/project_source_of_truth.md`
+- `report/report_support_documentation/guidelines/diagrams/diagram_quality_guidelines.md`
+- `report/report_support_documentation/guidelines/diagrams/diagram_type_rubric.md`
+- `report/report_support_documentation/guidelines/diagrams/diagram_review_checklist.md`
+- `report/report_support_documentation/guidelines/diagrams/uml_2_5_1_drawing_rules.md`
 
 When using diagram skills:
 
-- Prefer PlantUML for UML diagrams that should stay text-based and versionable.
-- Prefer draw.io for polished diagrams that need richer layout or styling.
+- Use PlantUML for all UML and architecture diagrams so sources remain text-based, reviewable and versionable.
+- Do not create or retain draw.io sources. If a legacy draw.io diagram must be preserved conceptually, recreate it as PlantUML and render a new export.
 - Keep diagram source files near their exported images.
 - Update LaTeX references/captions when diagram paths change.
 
 Before creating, editing, exporting, or embedding any diagram:
 
-1. Check the diagram against `project_source_of_truth.md`.
-2. Check the diagram type against `diagram_type_rubric.md`.
-3. Use `diagram_review_checklist.md` as the review checklist before considering the diagram ready for the report.
-4. Ensure the diagram has traceability to the relevant use case, FR/NFR, analysis class, or design section.
-5. Ensure the diagram is placed in the correct OOAD chapter and does not mix analysis-level and implementation-level details.
+1. Check the diagram against `report/report_support_documentation/governance/project_source_of_truth.md`.
+2. Check UML notation and relationship direction against `report/report_support_documentation/guidelines/diagrams/uml_2_5_1_drawing_rules.md`.
+3. Check the diagram type against `report/report_support_documentation/guidelines/diagrams/diagram_type_rubric.md`.
+4. Use `report/report_support_documentation/guidelines/diagrams/diagram_review_checklist.md` before considering the diagram ready for the report.
+5. Ensure the diagram has traceability to the relevant use case, FR/NFR, analysis class, or design section.
+6. Ensure the diagram is placed in the correct OOAD chapter and does not mix analysis-level and implementation-level details.
 
 When reviewing existing diagrams, report issues in this order:
 

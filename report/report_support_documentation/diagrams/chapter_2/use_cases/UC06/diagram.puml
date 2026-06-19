@@ -1,0 +1,30 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Lập trình viên" as Developer
+
+rectangle "Theo dõi giao dịch, usage, cost và trace" {
+  usecase "Xem tổng quan usage\nvà chi phí" as ViewSummary
+  usecase "Tra cứu giao dịch\nvà execution trace" as SearchTrace
+  usecase "Xem chi tiết\ngiao dịch" as ViewDetail
+  usecase "Xuất báo cáo theo\nphạm vi được phép" as ExportReport
+}
+
+OrgAdmin -- ViewSummary
+OrgAdmin -- SearchTrace
+OrgAdmin -- ViewDetail
+OrgAdmin -- ExportReport
+
+Developer -- ViewSummary
+Developer -- SearchTrace
+Developer -- ViewDetail
+Developer -- ExportReport
+@enduml

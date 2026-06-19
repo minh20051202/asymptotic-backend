@@ -1,0 +1,65 @@
+@startuml
+!theme plain
+title Sequence - Nạp tiền và phân bổ ngân sách bốn cấp
+
+autonumber
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "Quản trị viên\ntổ chức" as Admin
+actor "Lập trình viên" as Developer
+box "Asymptotic Modular Monolith" #F8FAFC
+participant "AdminHandler" as Handler
+participant "PaymentService" as Payment
+participant "BudgetAllocationService" as Budget
+participant "Persistence" as Persistence <<repository>>
+end box
+database "Asymptotic Database" as DB
+participant "Payment Provider" as Provider
+
+group Nạp tiền vào ví tổ chức
+  Admin -> Handler: tạo yêu cầu nạp tiền
+  Handler -> Payment: createTopUp(amount)
+  Payment -> Persistence: lưu PaymentTransaction(Pending)
+  Persistence -> DB: insert payment transaction
+  Payment -> Provider: tạo phiên thanh toán
+  Provider --> Payment: paymentUrl/reference
+  Payment --> Handler: paymentUrl
+  Handler --> Admin: chuyển tới Payment Provider
+
+  Provider -> Handler: callback kết quả thanh toán
+  Handler -> Payment: confirmCallback(reference, signature)
+  Payment -> Persistence: cộng ví và ghi ledger
+  Persistence -> DB: transaction cập nhật Wallet,\nPaymentTransaction và LedgerEntry
+  DB --> Persistence: committed
+  Payment --> Handler: top-up thành công
+end
+
+group Tổ chức cấp ngân sách cho đội ngũ
+  Admin -> Handler: allocateToTeam(teamId, amount)
+  Handler -> Budget: allocate(Organization, Team, amount)
+  Budget -> Persistence: kiểm tra và cập nhật hạn mức
+  Persistence -> DB: transaction Organization -> Team
+  DB --> Persistence: committed
+  Budget --> Handler: thành công
+end
+
+group Đội ngũ cấp hạn mức cho lập trình viên
+  Admin -> Handler: allocateToDeveloper(developerId, amount)
+  Handler -> Budget: allocate(Team, Developer, amount)
+  Budget -> Persistence: kiểm tra membership và hạn mức Team
+  Persistence -> DB: transaction Team -> Developer
+  DB --> Persistence: committed
+  Budget --> Handler: thành công
+end
+
+group Lập trình viên cấp hạn mức cho Agent
+  Developer -> Handler: allocateToAgent(agentId, amount)
+  Handler -> Budget: allocate(Developer, Agent, amount)
+  Budget -> Persistence: kiểm tra ownership và hạn mức Developer
+  Persistence -> DB: transaction Developer -> Agent
+  DB --> Persistence: committed
+  Budget --> Handler: thành công
+  Handler --> Developer: hiển thị hạn mức mới
+end
+@enduml

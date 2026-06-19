@@ -1,0 +1,26 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Lập trình viên" as Developer
+
+rectangle "Quản lý API key của Agent" {
+  usecase "Xem danh sách và\ntrạng thái API key" as ViewKeys
+  usecase "Tạo API key\ncho Agent" as CreateKey
+  usecase "Thu hồi API key\ncủa Agent" as RevokeKey
+}
+
+Developer -- ViewKeys
+Developer -- CreateKey
+Developer -- RevokeKey
+OrgAdmin -- ViewKeys
+OrgAdmin -- CreateKey
+OrgAdmin -- RevokeKey
+@enduml

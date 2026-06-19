@@ -1,0 +1,52 @@
+@startuml
+!theme plain
+title Robustness Diagram - Thực hiện yêu cầu AI qua Gateway
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "AI Agent" as AgentActor
+actor "AI Provider" as ProviderActor
+
+boundary GatewayRequestBoundary
+boundary AIProviderBoundary
+
+control AIRequestControl
+control AuthenticationControl
+control IdempotencyControl
+control PolicyEvaluationControl
+control BudgetControl
+control RoutingControl
+control UsageCostControl
+
+entity Agent
+entity APIKey
+entity BudgetPolicy
+entity Wallet
+entity AIProvider
+entity AIModel
+entity IdempotencyRecord
+entity FinancialTransaction
+entity ExecutionTrace
+
+AgentActor --> GatewayRequestBoundary
+GatewayRequestBoundary --> AIRequestControl
+AIRequestControl --> AuthenticationControl
+AuthenticationControl --> APIKey
+AuthenticationControl --> Agent
+AIRequestControl --> IdempotencyControl
+IdempotencyControl --> IdempotencyRecord
+AIRequestControl --> PolicyEvaluationControl
+PolicyEvaluationControl --> BudgetPolicy
+AIRequestControl --> BudgetControl
+BudgetControl --> Wallet
+BudgetControl --> BudgetPolicy
+AIRequestControl --> RoutingControl
+RoutingControl --> AIProvider
+RoutingControl --> AIModel
+RoutingControl --> AIProviderBoundary
+AIProviderBoundary --> ProviderActor
+AIRequestControl --> UsageCostControl
+UsageCostControl --> FinancialTransaction
+UsageCostControl --> ExecutionTrace
+@enduml

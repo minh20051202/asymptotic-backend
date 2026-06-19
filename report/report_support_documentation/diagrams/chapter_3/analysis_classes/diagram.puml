@@ -1,0 +1,90 @@
+@startuml
+!theme plain
+title Biểu đồ lớp phân tích tổng quát
+
+top to bottom direction
+hide circle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam defaultFontName "Arial"
+
+package "Boundary" #E0F2FE {
+  class GatewayRequestBoundary <<boundary>>
+  class OrganizationBoundary <<boundary>>
+  class OrganizationRegistrationBoundary <<boundary>>
+  class ReportingBoundary <<boundary>>
+  class SystemAdminBoundary <<boundary>>
+  class ExternalProviderBoundary <<boundary>>
+}
+
+package "Control" #FEF3C7 {
+  class AIRequestControl <<control>>
+  class AgentManagementControl <<control>>
+  class APIKeyManagementControl <<control>>
+  class OrganizationRegistrationControl <<control>>
+  class OrganizationStructureControl <<control>>
+  class BudgetAllocationControl <<control>>
+  class PaymentControl <<control>>
+  class ReportingControl <<control>>
+  class ProviderCatalogControl <<control>>
+}
+
+package "Entity" #DCFCE7 {
+  class User <<entity>>
+  class Organization <<entity>>
+  class Team <<entity>>
+  class DeveloperProfile <<entity>>
+  class Agent <<entity>>
+  class APIKey <<entity>>
+  class Wallet <<entity>>
+  class BudgetPolicy <<entity>>
+  class FinancialTransaction <<entity>>
+  class AIProvider <<entity>>
+  class AIModel <<entity>>
+  class ExecutionTrace <<entity>>
+}
+
+GatewayRequestBoundary --> AIRequestControl
+OrganizationBoundary --> AgentManagementControl
+OrganizationBoundary --> APIKeyManagementControl
+OrganizationBoundary --> OrganizationStructureControl
+OrganizationBoundary --> BudgetAllocationControl
+OrganizationBoundary --> PaymentControl
+OrganizationRegistrationBoundary --> OrganizationRegistrationControl
+ReportingBoundary --> ReportingControl
+SystemAdminBoundary --> ProviderCatalogControl
+ExternalProviderBoundary --> AIRequestControl
+ExternalProviderBoundary --> PaymentControl
+
+AIRequestControl --> Agent
+AIRequestControl --> APIKey
+AIRequestControl --> BudgetPolicy
+AIRequestControl --> FinancialTransaction
+AIRequestControl --> AIProvider
+AIRequestControl --> AIModel
+AIRequestControl --> ExecutionTrace
+AgentManagementControl --> Agent
+AgentManagementControl --> DeveloperProfile
+APIKeyManagementControl --> APIKey
+OrganizationRegistrationControl --> User
+OrganizationRegistrationControl --> Organization
+OrganizationRegistrationControl --> Wallet
+OrganizationStructureControl --> Team
+OrganizationStructureControl --> DeveloperProfile
+BudgetAllocationControl --> Wallet
+BudgetAllocationControl --> BudgetPolicy
+PaymentControl --> Wallet
+PaymentControl --> FinancialTransaction
+ReportingControl --> FinancialTransaction
+ReportingControl --> ExecutionTrace
+ProviderCatalogControl --> AIProvider
+ProviderCatalogControl --> AIModel
+
+Organization "1" *-- "0..*" Team
+DeveloperProfile "1" o-- "0..*" Agent
+Agent "1" *-- "0..*" APIKey
+Organization "1" *-- "1" Wallet
+AIProvider "1" *-- "0..*" AIModel
+@enduml

@@ -1,0 +1,39 @@
+@startuml
+!theme plain
+allowmixing
+title Các lớp biên
+top to bottom direction
+hide circle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+package "Tác nhân sử dụng Gateway" #E0F2FE {
+  actor "Người dùng" as User
+  actor "Quản trị viên tổ chức /\nLập trình viên" as OrgUser
+  actor "AI Agent" as Agent
+  actor "Quản trị viên hệ thống" as SysAdmin
+
+  class OrganizationRegistrationBoundary <<boundary>>
+  class OrganizationBoundary <<boundary>>
+  class ReportingBoundary <<boundary>>
+  class GatewayRequestBoundary <<boundary>>
+  class SystemAdminBoundary <<boundary>>
+
+  User --> OrganizationRegistrationBoundary
+  OrgUser --> OrganizationBoundary
+  OrgUser --> ReportingBoundary
+  Agent --> GatewayRequestBoundary
+  SysAdmin --> SystemAdminBoundary
+}
+
+package "Hệ thống ngoài hỗ trợ" #F3F4F6 {
+  actor "AI Provider" as Provider
+  actor "Payment Provider" as Payment
+
+  class AIProviderBoundary <<boundary>>
+  class PaymentProviderBoundary <<boundary>>
+
+  Provider --> AIProviderBoundary
+  Payment --> PaymentProviderBoundary
+}
+@enduml

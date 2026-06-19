@@ -1,0 +1,71 @@
+@startuml
+!theme plain
+title Sequence UC01 - Thực hiện yêu cầu AI qua Gateway
+
+autonumber
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "AI Agent" as Agent
+box "Asymptotic Modular Monolith" #F8FAFC
+participant "GatewayHandler" as Handler
+participant "AIRequestService" as Request
+participant "AccessControl" as Access
+participant "BudgetControl" as Budget
+participant "ProviderGateway" as ProviderGateway
+participant "SettlementControl" as Settlement
+participant "Persistence" as Persistence <<repository>>
+end box
+database "Asymptotic Database" as DB
+participant "AI Provider" as Provider
+
+Agent -> Handler: gửi request với API key và idempotency key
+Handler -> Request: execute(request)
+Request -> Access: xác thực khóa, Agent và policy
+Access -> Persistence: tải API key, Agent và quan hệ quản lý
+Persistence -> DB: đọc dữ liệu định danh
+DB --> Persistence: organization, team, developer, Agent
+Persistence --> Access: đường dẫn chịu chi phí
+
+alt khóa hoặc đường dẫn không hợp lệ
+  Access --> Request: từ chối
+  Request --> Handler: lỗi xác thực/phân quyền
+  Handler --> Agent: 401/403
+else hợp lệ
+  Request -> Persistence: kiểm tra idempotency
+  Persistence -> DB: đọc bản ghi idempotency
+  DB --> Persistence: trạng thái trước đó
+
+  alt request đã hoàn tất
+    Persistence --> Request: kết quả đã lưu
+    Request --> Handler: replay response
+    Handler --> Agent: kết quả không tính phí trùng
+  else request mới
+    Request -> Budget: kiểm tra và reserve chi phí dự kiến
+    Budget -> Persistence: khóa và cập nhật hạn mức bốn cấp
+    Persistence -> DB: transaction reserve\nOrganization-Team-Developer-Agent
+    DB --> Persistence: reservation thành công/thất bại
+
+    alt vi phạm policy hoặc không đủ hạn mức
+      Persistence --> Budget: từ chối
+      Request -> Persistence: ghi trace bị từ chối
+      Persistence -> DB: lưu trace
+      Request --> Handler: 402/403/429
+      Handler --> Agent: lỗi nghiệp vụ
+    else đủ điều kiện
+      Budget --> Request: reservationId
+      Request -> ProviderGateway: gọi model bằng credential nội bộ
+      ProviderGateway -> Provider: request AI
+      Provider --> ProviderGateway: response + usage
+      ProviderGateway --> Request: kết quả chuẩn hóa
+      Request -> Settlement: quyết toán usage và cost
+      Settlement -> Persistence: settle, release phần dư,\nlưu trace và kết quả lũy đẳng
+      Persistence -> DB: transaction quyết toán
+      DB --> Persistence: hoàn tất
+      Settlement --> Request: completed
+      Request --> Handler: response
+      Handler --> Agent: kết quả AI
+    end
+  end
+end
+@enduml

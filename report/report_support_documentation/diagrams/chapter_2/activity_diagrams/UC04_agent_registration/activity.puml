@@ -1,0 +1,48 @@
+@startuml
+!theme plain
+title UC04 - Đăng ký AI Agent bên ngoài
+
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam ArrowColor #475569
+
+|Lập trình viên|
+start
+:Chọn chức năng đăng ký AI Agent;
+:Nhập thông tin Agent bên ngoài;
+:Gửi yêu cầu đăng ký;
+
+|Asymptotic Gateway|
+:Kiểm tra quyền đăng ký;
+if (Có quyền?) then (Có)
+  :Kiểm tra thông tin Agent;
+else (Không)
+  :Thông báo không có quyền;
+  |Lập trình viên|
+  :Nhận thông báo từ chối;
+  stop
+endif
+
+|Asymptotic Gateway|
+if (Thông tin hợp lệ?) then (Có)
+  :Đăng ký Agent vào tổ chức;
+  :Gắn lập trình viên quản lý;
+  :Đặt trạng thái chưa kích hoạt;
+  :Thông báo đăng ký thành công;
+else (Không)
+  :Thông báo thông tin cần điều chỉnh;
+endif
+
+|Lập trình viên|
+if (Đăng ký thành công?) then (Có)
+  :Nhận thông tin Agent đã đăng ký;
+else (Không)
+  :Nhận yêu cầu điều chỉnh thông tin;
+endif
+
+stop
+@enduml

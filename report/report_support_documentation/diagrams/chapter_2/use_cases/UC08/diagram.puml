@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+
+rectangle "Quản lý đội ngũ và thành viên tổ chức" {
+  usecase "Tạo và cập nhật\nđội ngũ" as ManageTeam
+  usecase "Thêm và cập nhật\nlập trình viên" as ManageDeveloper
+  usecase "Gán hoặc chuyển\nlập trình viên giữa đội ngũ" as AssignTeam
+  usecase "Bàn giao AI Agent" as TransferAgent
+  usecase "Vô hiệu hóa\nlập trình viên" as DisableDeveloper
+  usecase "Vô hiệu hóa\nđội ngũ" as DisableTeam
+}
+
+OrgAdmin -- ManageTeam
+OrgAdmin -- ManageDeveloper
+OrgAdmin -- AssignTeam
+OrgAdmin -- TransferAgent
+OrgAdmin -- DisableDeveloper
+OrgAdmin -- DisableTeam
+@enduml

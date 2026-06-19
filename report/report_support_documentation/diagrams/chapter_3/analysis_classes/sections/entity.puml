@@ -1,0 +1,55 @@
+@startuml
+!theme plain
+title Các lớp thực thể cốt lõi
+top to bottom direction
+hide circle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+class User <<entity>>
+class Organization <<entity>>
+class OrganizationMembership <<entity>>
+class Team <<entity>>
+class TeamMembership <<entity>>
+class DeveloperProfile <<entity>>
+class Agent <<entity>>
+class APIKey <<entity>>
+class Wallet <<entity>>
+class BudgetPolicy <<entity>>
+class BudgetAllocation <<entity>>
+class FinancialTransaction <<entity>>
+class LedgerEntry <<entity>>
+class PaymentTransaction <<entity>>
+class IdempotencyRecord <<entity>>
+class ExecutionTrace <<entity>>
+class AIProvider <<entity>>
+class AIModel <<entity>>
+class ProviderEndpoint <<entity>>
+class ProviderCredential <<entity>>
+class PricingPolicy <<entity>>
+class FallbackPolicy <<entity>>
+
+User "1" -- "0..*" OrganizationMembership
+Organization "1" *-- "1..*" OrganizationMembership
+Organization "1" *-- "0..*" Team
+Organization "1" *-- "1" Wallet
+Team "1" *-- "0..*" TeamMembership
+DeveloperProfile "1" -- "1" TeamMembership
+DeveloperProfile "1" o-- "0..*" Agent
+Agent "1" *-- "0..*" APIKey
+Organization "1" o-- "0..*" BudgetPolicy
+Team "1" o-- "0..1" BudgetPolicy
+DeveloperProfile "1" o-- "0..1" BudgetPolicy
+Agent "1" o-- "0..1" BudgetPolicy
+BudgetPolicy "1" o-- "0..*" BudgetAllocation
+FinancialTransaction "1" *-- "1..*" LedgerEntry
+ExecutionTrace "0..1" --> "0..1" FinancialTransaction
+ExecutionTrace "0..1" --> "0..1" IdempotencyRecord
+PaymentTransaction "0..1" --> "0..1" FinancialTransaction
+AIProvider "1" *-- "0..*" AIModel
+AIProvider "1" *-- "1..*" ProviderEndpoint
+AIProvider "1" *-- "1..*" ProviderCredential
+AIModel "1" o-- "1..*" PricingPolicy
+AIModel "1" o-- "0..*" FallbackPolicy
+@enduml

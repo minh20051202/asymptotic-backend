@@ -1,0 +1,26 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\nhệ thống" as SysAdmin
+
+rectangle "Quản lý provider, model và chính sách giá" {
+  usecase "Xem danh mục\nprovider và model" as ViewCatalog
+  usecase "Thêm hoặc cập nhật\nprovider và model" as ManageCatalog
+  usecase "Vô hiệu hóa\nprovider hoặc model" as DisableCatalog
+  usecase "Cập nhật biểu giá" as UpdatePricing
+  usecase "Thiết lập chính sách\nfallback" as ConfigureFallback
+}
+
+SysAdmin -- ViewCatalog
+SysAdmin -- ManageCatalog
+SysAdmin -- DisableCatalog
+SysAdmin -- UpdatePricing
+SysAdmin -- ConfigureFallback
+@enduml

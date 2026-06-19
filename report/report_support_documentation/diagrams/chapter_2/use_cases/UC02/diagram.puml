@@ -1,0 +1,20 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Nhà cung cấp\ndịch vụ thanh toán" as PaymentProvider
+
+rectangle "Nạp tiền vào ví tổ chức" {
+  usecase "Nạp tiền vào\nví tổ chức" as UC02
+}
+
+OrgAdmin -- UC02
+UC02 -- PaymentProvider
+@enduml

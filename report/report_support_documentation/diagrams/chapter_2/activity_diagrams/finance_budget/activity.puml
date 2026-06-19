@@ -1,0 +1,71 @@
+@startuml
+!theme plain
+title UC02 và UC03 - Nạp tiền hoặc phân bổ hạn mức
+
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam ArrowColor #475569
+
+|Quản trị viên tổ chức hoặc Lập trình viên|
+start
+:Chọn nghiệp vụ tài chính;
+
+|Asymptotic Gateway|
+if (Nạp tiền vào ví tổ chức?) then (UC02)
+  |Quản trị viên tổ chức hoặc Lập trình viên|
+  :Quản trị viên nhập số tiền\nvà phương thức thanh toán;
+  :Gửi yêu cầu nạp tiền;
+
+  |Asymptotic Gateway|
+  if (Thông tin hợp lệ?) then (Có)
+    :Gửi yêu cầu thanh toán;
+  else (Không)
+    :Thông báo thông tin không hợp lệ;
+    |Quản trị viên tổ chức hoặc Lập trình viên|
+    :Quản trị viên nhận thông báo lỗi;
+    stop
+  endif
+
+  |Payment Provider|
+  :Xử lý thanh toán;
+  :Trả kết quả thanh toán;
+
+  |Asymptotic Gateway|
+  if (Thanh toán thành công?) then (Có)
+    :Cập nhật số dư ví tổ chức;
+    :Thông báo nạp tiền thành công;
+  else (Không)
+    :Thông báo thanh toán thất bại;
+  endif
+
+  |Quản trị viên tổ chức hoặc Lập trình viên|
+  :Quản trị viên nhận kết quả nạp tiền;
+
+else (UC03)
+  |Quản trị viên tổ chức hoặc Lập trình viên|
+  if (Cấp hạn mức cho Agent?) then (Có)
+    :Lập trình viên chọn Agent\nvà nhập hạn mức;
+  else (Không)
+    :Quản trị viên chọn Team hoặc Developer\nvà nhập hạn mức;
+  endif
+  :Gửi yêu cầu phân bổ;
+
+  |Asymptotic Gateway|
+  :Kiểm tra quyền và\nhạn mức còn khả dụng;
+  if (Đủ điều kiện phân bổ?) then (Có)
+    :Cập nhật hạn mức cấp dưới;
+    :Thông báo phân bổ thành công;
+  else (Không)
+    :Thông báo lý do từ chối;
+  endif
+
+  |Quản trị viên tổ chức hoặc Lập trình viên|
+  :Nhận kết quả phân bổ;
+endif
+
+stop
+@enduml

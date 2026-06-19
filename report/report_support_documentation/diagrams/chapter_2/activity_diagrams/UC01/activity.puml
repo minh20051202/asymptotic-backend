@@ -1,0 +1,63 @@
+@startuml
+!theme plain
+title UC01 - Thực hiện yêu cầu AI qua Gateway
+
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+skinparam ArrowColor #475569
+
+|AI Agent|
+start
+:Gửi yêu cầu AI;
+
+|Asymptotic Gateway|
+:Xác thực Agent;
+if (Agent hợp lệ?) then (Có)
+  :Kiểm tra chính sách,\nquota và ngân sách;
+else (Không)
+  :Thông báo yêu cầu không hợp lệ;
+  |AI Agent|
+  :Nhận thông báo lỗi;
+  stop
+endif
+
+|Asymptotic Gateway|
+if (Yêu cầu được phép thực hiện?) then (Có)
+  :Chuyển yêu cầu tới AI Provider;
+else (Không)
+  :Thông báo lý do từ chối;
+  |AI Agent|
+  :Nhận thông báo từ chối;
+  stop
+endif
+
+|AI Provider|
+:Xử lý yêu cầu AI;
+if (Xử lý thành công?) then (Có)
+  :Trả kết quả và thông tin sử dụng;
+else (Không)
+  :Trả thông báo lỗi;
+endif
+
+|Asymptotic Gateway|
+if (Có kết quả?) then (Có)
+  :Ghi nhận mức sử dụng và chi phí;
+  :Trả kết quả AI;
+else (Không)
+  :Ghi nhận yêu cầu thất bại;
+  :Trả thông báo lỗi;
+endif
+
+|AI Agent|
+if (Yêu cầu thành công?) then (Có)
+  :Nhận kết quả AI;
+else (Không)
+  :Nhận thông báo lỗi;
+endif
+
+stop
+@enduml

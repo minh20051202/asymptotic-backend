@@ -1,0 +1,29 @@
+@startuml
+!theme plain
+title Robustness Diagram - Đăng ký và quản lý AI Agent
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "Lập trình viên" as DeveloperActor
+actor "Quản trị viên tổ chức" as AdminActor
+
+boundary AgentManagementBoundary
+
+control AgentManagementControl
+control OrganizationStructureControl
+
+entity Organization
+entity Team
+entity DeveloperProfile
+entity Agent
+
+DeveloperActor --> AgentManagementBoundary
+AdminActor --> AgentManagementBoundary
+AgentManagementBoundary --> AgentManagementControl
+AgentManagementControl --> DeveloperProfile
+AgentManagementControl --> Agent
+AgentManagementControl --> OrganizationStructureControl
+OrganizationStructureControl --> Organization
+OrganizationStructureControl --> Team
+@enduml

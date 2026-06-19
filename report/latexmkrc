@@ -1,2 +1,5 @@
 $pdflatex = 'pdflatex -shell-escape -interaction=nonstopmode -halt-on-error %O %S';
 $pdf_mode = 1;
+$out_dir = 'build';
+$aux_dir = 'build';
+$success_cmd = 'cp build/main.pdf main.pdf; rmdir _minted-main 2>/dev/null || true';

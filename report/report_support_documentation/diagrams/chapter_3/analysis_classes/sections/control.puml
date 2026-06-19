@@ -1,0 +1,54 @@
+@startuml
+!theme plain
+title Các lớp điều khiển
+top to bottom direction
+hide circle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+package "UC01 - Yêu cầu AI qua Gateway" #FEF3C7 {
+  class AIRequestControl <<control>>
+  class AuthenticationControl <<control>>
+  class IdempotencyControl <<control>>
+  class PolicyEvaluationControl <<control>>
+  class BudgetControl <<control>>
+  class RoutingControl <<control>>
+  class UsageCostControl <<control>>
+}
+
+package "Tổ chức, Agent và API key" #E0F2FE {
+  class OrganizationRegistrationControl <<control>>
+  class OrganizationStructureControl <<control>>
+  class AgentManagementControl <<control>>
+  class APIKeyManagementControl <<control>>
+  class BudgetAllocationControl <<control>>
+}
+
+package "Thanh toán, báo cáo và provider" #DCFCE7 {
+  class PaymentControl <<control>>
+  class ReportingControl <<control>>
+  class ProviderCatalogControl <<control>>
+}
+
+AIRequestControl --> AuthenticationControl
+AIRequestControl --> IdempotencyControl
+AIRequestControl --> PolicyEvaluationControl
+AIRequestControl --> BudgetControl
+AIRequestControl --> RoutingControl
+AIRequestControl --> UsageCostControl
+AuthenticationControl -[hidden]down-> IdempotencyControl
+IdempotencyControl -[hidden]down-> PolicyEvaluationControl
+PolicyEvaluationControl -[hidden]down-> BudgetControl
+BudgetControl -[hidden]down-> RoutingControl
+RoutingControl -[hidden]down-> UsageCostControl
+OrganizationStructureControl --> BudgetAllocationControl
+AgentManagementControl --> BudgetAllocationControl
+OrganizationRegistrationControl -[hidden]down-> OrganizationStructureControl
+OrganizationStructureControl -[hidden]down-> AgentManagementControl
+AgentManagementControl -[hidden]down-> APIKeyManagementControl
+APIKeyManagementControl -[hidden]down-> BudgetAllocationControl
+PaymentControl -[hidden]down-> ReportingControl
+ReportingControl -[hidden]down-> ProviderCatalogControl
+AIRequestControl -[hidden]right-> OrganizationRegistrationControl
+OrganizationRegistrationControl -[hidden]right-> PaymentControl
+@enduml

@@ -4,59 +4,68 @@
 
 \subsection*{Tổng quan}
 
-Một tác nhân AI có thể tạo nhiều yêu cầu nối tiếp hoặc đồng thời trong quá trình hoàn thành một nhiệm vụ. Số lượng yêu cầu, mô hình được sử dụng và lượng tài nguyên tiêu thụ phụ thuộc vào kết quả trung gian, vì vậy tổng chi phí khó xác định trước.
+Một tác nhân AI có thể tạo nhiều yêu cầu nối tiếp hoặc đồng thời trong quá trình hoàn thành một nhiệm vụ. Số lượng yêu cầu, mô hình được sử dụng và lượng tài nguyên tiêu thụ phụ thuộc vào kết quả trung gian, vì vậy tổng chi phí khó được xác định trước.
 
-Trong mô hình sử dụng trực tiếp, tổ chức hoặc lập trình viên thường cấp khóa của nhà cung cấp AI cho ứng dụng hoặc agent. Cách làm này đơn giản nhưng làm giảm khả năng kiểm soát tập trung: hệ thống khó biết agent nào tạo yêu cầu, tổ chức nào chịu chi phí, ngân sách còn lại bao nhiêu và yêu cầu có nằm trong chính sách được cấp hay không.
+Trong mô hình sử dụng trực tiếp, tổ chức hoặc lập trình viên thường cấu hình khóa của nhà cung cấp AI cho ứng dụng hoặc tác nhân. Cách làm này khiến thông tin xác thực bị phân tán và làm giảm khả năng kiểm soát tập trung. Tổ chức khó xác định tác nhân nào tạo yêu cầu, đơn vị nào chịu chi phí, hạn mức còn lại bao nhiêu và yêu cầu có phù hợp với chính sách sử dụng hay không.
 
-Vì vậy, đề tài định vị Asymptotic như một \textit{AI Agent Financial Gateway}. Tổ chức nạp tiền vào hệ thống, đăng ký các tác nhân AI bên ngoài và cấp khóa truy cập do Asymptotic quản lý. Khi agent cần gọi dịch vụ AI, request đi qua Gateway; Gateway kiểm tra định danh, ngân sách, hạn mức và chính sách trước khi gọi nhà cung cấp bằng thông tin xác thực nội bộ.
+Asymptotic được định vị là cổng trung gian giữa tác nhân AI bên ngoài và nhà cung cấp dịch vụ AI trả phí. Tổ chức duy trì tiền trong ví và phân bổ hạn mức theo chuỗi tổ chức, đội ngũ, lập trình viên và tác nhân. Lập trình viên đăng ký tác nhân do mình quản lý và cấu hình khóa truy cập do Asymptotic cấp. Khi tác nhân gửi yêu cầu, Gateway kiểm tra định danh, chính sách, hạn ngạch và ngân sách trước khi gọi nhà cung cấp bằng thông tin xác thực nội bộ.
 
 %-----------------------------------------------------------
 
 \subsection*{Nhà cung cấp dịch vụ AI}
 
-Nhà cung cấp dịch vụ AI tiếp nhận yêu cầu qua API và tính phí theo mô hình, số token hoặc loại dịch vụ. Chi phí thực tế thường chỉ được xác nhận khi phản hồi đã được tạo. Nhà cung cấp không quản lý ngân sách nội bộ của tổ chức sử dụng Gateway và cũng không biết yêu cầu thuộc tác nhân, nhiệm vụ hoặc hạn mức nào trong hệ thống Asymptotic.
+Nhà cung cấp dịch vụ AI tiếp nhận yêu cầu qua API và tính phí theo mô hình, số token hoặc loại dịch vụ. Chi phí thực tế thường chỉ được xác nhận sau khi yêu cầu đã được xử lý. Trong khi đó, tổ chức cần kiểm soát chi phí theo cơ cấu nội bộ gồm đội ngũ, lập trình viên và từng tác nhân AI.
 
-Do đó, Gateway cần ước lượng chi phí trước khi gửi yêu cầu, sau đó ghi nhận mức sử dụng và chi phí sau khi nhận phản hồi. Với nguyên mẫu, hệ thống tập trung vào kiểm soát trước khi route request và lưu usage/cost/trace; quyết toán chính xác theo token thực tế ở mức production được xem là hướng mở rộng.
+Vì vậy, Gateway cần xác định hoặc ước lượng chi phí dự kiến trước khi gửi yêu cầu, sau đó ghi nhận mức sử dụng và chi phí thực tế khi nhận kết quả. Hai thời điểm kiểm soát này giúp hệ thống vừa hạn chế chi tiêu vượt mức vừa duy trì dữ liệu phục vụ báo cáo và đối soát.
 
 %-----------------------------------------------------------
 
 \subsection*{Gateway tài chính cho AI Agent}
 
-Gateway trong đề tài không chỉ là điểm vào kỹ thuật cho request. Hệ thống còn đóng vai trò kiểm soát tài chính theo thời gian thực cho các request do tác nhân AI phát sinh. Mỗi request cần được gắn với tổ chức, tác nhân, API key, chính sách sử dụng, ngân sách và nhà cung cấp AI tương ứng.
+Gateway là điểm kiểm soát tập trung đối với các yêu cầu do tác nhân AI phát sinh. Mỗi yêu cầu cần được liên kết với tổ chức, đội ngũ, lập trình viên, tác nhân, API key, chính sách sử dụng, hạn mức và nhà cung cấp AI tương ứng.
 
-Điểm quan trọng là agent không dùng trực tiếp provider API key. Agent chỉ dùng khóa do Asymptotic cấp để gọi Gateway. Gateway mới là thành phần giữ và sử dụng thông tin xác thực nội bộ để gọi nhà cung cấp AI. Cách tổ chức này giúp hệ thống thu hồi quyền truy cập, áp chính sách và theo dõi chi phí mà không phải phát tán khóa của nhà cung cấp cho từng agent.
+Tác nhân dùng API key do Asymptotic cấp để gọi Gateway. Gateway xác thực khóa, xác định đường dẫn chịu chi phí và sử dụng thông tin xác thực nội bộ để gọi nhà cung cấp AI. Cách tổ chức này cho phép quản lý quyền truy cập, áp dụng chính sách và theo dõi chi phí tại một điểm thống nhất.
 
 %-----------------------------------------------------------
 
 \subsection*{Ngân sách, giao dịch và truy vết}
 
-Việc chỉ tổng hợp chi phí sau khi dịch vụ đã được sử dụng không đủ cho bài toán của đề tài, vì khi đó hệ thống chỉ phát hiện vượt ngân sách sau khi chi phí đã phát sinh. Gateway cần tham gia trước khi request được gửi tới nhà cung cấp: kiểm tra ngân sách, giữ chỗ hoặc xác nhận hạn mức, sau đó mới cho phép request tiếp tục.
+Việc chỉ tổng hợp chi phí sau khi dịch vụ đã được sử dụng không đáp ứng yêu cầu kiểm soát theo thời gian thực. Gateway cần kiểm tra ví tổ chức và hạn mức tại các cấp đội ngũ, lập trình viên và tác nhân trước khi cho phép yêu cầu tiếp tục.
 
-Ngoài kiểm soát trước thực thi, hệ thống cần lưu lại lịch sử request, usage, chi phí, trạng thái xử lý và quan hệ giữa tổ chức với tác nhân AI. Các dữ liệu này phục vụ báo cáo, kiểm tra và đối soát. Với các trường hợp request bị gửi lại do lỗi mạng hoặc mất phản hồi, cơ chế lũy đẳng giúp hạn chế ghi nhận trùng cho cùng một hành động.
+Sau khi xử lý, hệ thống cần ghi nhận lịch sử yêu cầu, mức sử dụng, chi phí, giao dịch và trạng thái thực thi. Các dữ liệu này tạo cơ sở để kiểm tra, báo cáo và đối soát. Khi một yêu cầu được gửi lại do lỗi mạng hoặc mất phản hồi, khóa lũy đẳng giúp hệ thống nhận diện yêu cầu đã xử lý và hạn chế ghi nhận chi phí trùng.
 
 %-----------------------------------------------------------
 
 \subsection*{Mô hình thực thi của AI Agent}
 
-Một nhiệm vụ của tác nhân AI có thể gồm các bước sinh nội dung, gọi công cụ, đánh giá kết quả và thử lại. Mỗi bước có thể tạo thêm yêu cầu mới. Do đó, hệ thống không thể giả định trước số lần gọi hoặc tổng chi phí của toàn bộ nhiệm vụ.
+Một nhiệm vụ của tác nhân AI có thể gồm nhiều bước như sinh nội dung, gọi công cụ, đánh giá kết quả và thử lại. Mỗi bước có thể tạo thêm yêu cầu mới, đồng thời nhiều nhiệm vụ có thể sử dụng chung một nguồn ngân sách. Vì vậy, số lần gọi và tổng chi phí của toàn bộ quá trình khó được dự đoán chính xác.
 
-Trong phạm vi nguyên mẫu, mỗi yêu cầu được kiểm soát độc lập nhưng vẫn được liên kết với tổ chức, agent, API key và ngân sách tương ứng. Cách tiếp cận này phù hợp với MVP vì xử lý được rủi ro chi phí ở từng request mà không cần xây dựng môi trường chạy agent hoặc điều phối workflow của agent.
+Trong phạm vi MVP, mỗi yêu cầu được kiểm soát độc lập và liên kết với đầy đủ đường dẫn tổ chức, đội ngũ, lập trình viên và tác nhân. Cách tiếp cận theo từng yêu cầu giúp Gateway đưa ra quyết định chấp nhận hoặc từ chối trước khi chi phí phát sinh tại nhà cung cấp.
 
 %-----------------------------------------------------------
 
-\subsection*{Khoảng trống kỹ thuật và bài toán cần giải quyết}
+\subsection*{Khoảng trống và bài toán cần giải quyết}
 
-Khoảng trống cần giải quyết gồm các điểm chính: thiếu định danh riêng cho AI Agent, thiếu kiểm soát ngân sách trước khi gọi dịch vụ, thiếu cơ chế quản lý provider credential tập trung, thiếu khả năng chống ghi nhận trùng và thiếu truy vết chi phí theo tổ chức/agent. Đề tài giải quyết các vấn đề này bằng một gateway có trạng thái, kết hợp đăng ký agent, API key, ví/ngân sách, chính sách sử dụng, danh mục provider/model, giao dịch PostgreSQL và lịch sử thực thi.
+Từ hiện trạng trên, các khoảng trống chính cần được giải quyết gồm:
 
-Phiên bản nguyên mẫu tập trung vào luồng cốt lõi của MVP: tổ chức nạp tiền, đăng ký agent, agent gọi Gateway bằng API key, Gateway kiểm tra ngân sách/chính sách, gọi AI Provider bằng credential nội bộ và ghi nhận usage/cost/trace. Các chức năng như hóa đơn, quyết toán production với provider và báo cáo quản trị hoàn chỉnh được xem là phạm vi mở rộng.
+\begin{itemize}
+    \item Thiếu cơ chế định danh và quản lý riêng cho từng tác nhân AI bên ngoài.
+    \item Thiếu chuỗi hạn mức thể hiện đầy đủ quan hệ tổ chức, đội ngũ, lập trình viên và tác nhân.
+    \item Thiếu khả năng kiểm tra chính sách, hạn ngạch và ngân sách trước khi gọi dịch vụ AI trả phí.
+    \item Thiếu cơ chế quản lý tập trung API key của tác nhân và thông tin xác thực dùng để gọi nhà cung cấp.
+    \item Thiếu khả năng nhận diện yêu cầu gửi lại để hạn chế giao dịch và chi phí trùng.
+    \item Thiếu dữ liệu liên kết giữa yêu cầu, mức sử dụng, chi phí, giao dịch và tác nhân phát sinh.
+\end{itemize}
+
+Bài toán đặt ra là xây dựng một Gateway có khả năng kiểm soát từng yêu cầu theo định danh, quyền truy cập, chính sách và ngân sách; chuyển tiếp yêu cầu hợp lệ tới nhà cung cấp; đồng thời ghi nhận đầy đủ dữ liệu tài chính và dấu vết thực thi.
 
 \section{Đặc tả yêu cầu hệ thống}
 
 \subsection*{Phạm vi yêu cầu}
 
-Các yêu cầu dưới đây mô tả hệ thống mục tiêu trong phạm vi MVP. Hệ thống tập trung vào kiểm soát tài chính theo từng request do AI Agent bên ngoài phát sinh. Hệ thống không tạo, huấn luyện, triển khai hoặc điều phối AI Agent; các agent được xem là phần mềm bên ngoài đã được tổ chức đăng ký vào Gateway.
+Các yêu cầu dưới đây mô tả hệ thống mục tiêu trong phạm vi MVP. Hệ thống tập trung kiểm soát quyền truy cập, chính sách và tài chính theo từng yêu cầu do tác nhân AI bên ngoài phát sinh. Ví tổ chức lưu giữ tiền; đội ngũ, lập trình viên và tác nhân được cấp hạn mức sử dụng theo quan hệ phân cấp.
 
-Chương 4 đối chiếu từng yêu cầu với nguyên mẫu đã triển khai để phân biệt chức năng hoàn thành, chức năng hoàn thành một phần và chức năng chưa triển khai.
+Mức độ đáp ứng các yêu cầu của nguyên mẫu được kiểm thử và đánh giá tại Chương 5.
 
 %-----------------------------------------------------------
 
@@ -65,16 +74,16 @@ Chương 4 đối chiếu từng yêu cầu với nguyên mẫu đã triển kha
 Hệ thống phải đáp ứng các yêu cầu chức năng sau:
 
 \begin{description}
-    \item[FR01 -- Quản lý tổ chức và ví/ngân sách] Hệ thống phải ghi nhận tổ chức sử dụng dịch vụ, số dư ví hoặc ngân sách khả dụng, đồng thời cập nhật các biến động tài chính phát sinh từ nạp tiền, phân bổ ngân sách và ghi nhận chi phí.
-    \item[FR02 -- Đăng ký và quản lý tác nhân AI] Hệ thống phải cho phép tổ chức hoặc người được phân quyền đăng ký AI Agent bên ngoài vào Gateway, gắn Agent với tổ chức, trạng thái hoạt động, phạm vi ngân sách/chính sách và lịch sử sử dụng.
-    \item[FR03 -- Cấp và xác thực API key cho tác nhân] Hệ thống phải cấp API key do Asymptotic quản lý cho từng Agent, lưu khóa ở dạng bảo vệ và xác thực khóa này trước khi xử lý request gửi vào Gateway.
-    \item[FR04 -- Quản lý provider, model và biểu giá] Hệ thống phải lưu và quản lý thông tin AI Provider, model, endpoint, provider credential nội bộ, trạng thái hỗ trợ và biểu giá hoặc mức phí dự kiến phục vụ tính chi phí.
-    \item[FR05 -- Thiết lập chính sách sử dụng] Hệ thống phải cho phép thiết lập hạn mức, quota, budget hoặc policy theo tổ chức, lập trình viên, Agent hoặc phạm vi sử dụng được cấp quyền.
-    \item[FR06 -- Kiểm soát chi phí trước thực thi] Trước khi chuyển tiếp request tới AI Provider, hệ thống phải ước lượng chi phí dự kiến, kiểm tra ngân sách/chính sách liên quan và chỉ cho phép request tiếp tục khi các điều kiện này hợp lệ.
-    \item[FR07 -- Định tuyến request tới AI Provider] Hệ thống phải chuyển tiếp request hợp lệ tới AI Provider bằng provider credential nội bộ của Asymptotic; Agent không được sử dụng trực tiếp provider API key.
-    \item[FR08 -- Kiểm soát lũy đẳng] Hệ thống phải phát hiện request gửi lại dựa trên khóa lũy đẳng và nội dung request, trả kết quả đã lưu khi request trùng khớp và không tạo thêm giao dịch hoặc chi phí trùng.
-    \item[FR09 -- Ghi nhận usage, cost và trace] Hệ thống phải lưu lịch sử request, trạng thái xử lý, Agent, tổ chức, provider, model, usage, cost, transaction và trace để phục vụ kiểm tra, báo cáo và đối soát.
-    \item[FR10 -- Trả lỗi khi vượt giới hạn] Hệ thống phải trả lỗi rõ ràng và không gọi AI Provider khi request bị từ chối do sai khóa, Agent không hợp lệ, vượt quota, vượt budget hoặc vi phạm chính sách.
+    \item[FR01 -- Quản lý tổ chức và ví/ngân sách] Hệ thống phải ghi nhận tổ chức, ví tổ chức và hạn mức theo đội ngũ, lập trình viên và tác nhân AI; đồng thời ghi nhận các giao dịch nạp tiền, phân bổ, thu hồi và chi phí tương ứng.
+    \item[FR02 -- Đăng ký và quản lý tác nhân AI] Hệ thống phải cho phép người được phân quyền đăng ký tác nhân AI bên ngoài, gắn tác nhân với tổ chức, lập trình viên quản lý, trạng thái hoạt động và lịch sử sử dụng.
+    \item[FR03 -- Cấp và xác thực API key cho tác nhân] Hệ thống phải cấp API key cho tác nhân, lưu khóa ở dạng bảo vệ và dùng khóa này để xác thực yêu cầu gửi vào Gateway.
+    \item[FR04 -- Quản lý nhà cung cấp, mô hình và biểu giá] Hệ thống phải lưu cấu hình nhà cung cấp AI, mô hình, điểm cuối, thông tin xác thực nội bộ và đơn giá hoặc mức phí dự kiến.
+    \item[FR05 -- Thiết lập chính sách sử dụng] Hệ thống phải hỗ trợ hạn mức, hạn ngạch, ngân sách hoặc chính sách theo tổ chức, đội ngũ, lập trình viên và tác nhân. Lập trình viên chỉ được cấp hạn mức cho các tác nhân do mình quản lý trong phạm vi hạn mức còn khả dụng.
+    \item[FR06 -- Kiểm soát chi phí trước thực thi] Hệ thống phải ước lượng hoặc xác định chi phí dự kiến và chỉ chuyển tiếp yêu cầu khi ví tổ chức cùng hạn mức của đội ngũ, lập trình viên và tác nhân đều cho phép.
+    \item[FR07 -- Định tuyến yêu cầu tới nhà cung cấp AI] Gateway phải chuyển tiếp yêu cầu hợp lệ tới nhà cung cấp bằng thông tin xác thực nội bộ.
+    \item[FR08 -- Kiểm soát lũy đẳng] Yêu cầu gửi lại với cùng khóa lũy đẳng không được tạo thêm giao dịch hoặc chi phí trùng.
+    \item[FR09 -- Ghi nhận mức sử dụng, chi phí và dấu vết] Hệ thống phải lưu lịch sử yêu cầu, trạng thái xử lý, tổ chức, đội ngũ, lập trình viên, tác nhân, nhà cung cấp, mô hình, mức sử dụng, chi phí, giao dịch và dấu vết thực thi.
+    \item[FR10 -- Trả lỗi khi vượt giới hạn] Hệ thống phải trả lỗi rõ ràng khi yêu cầu bị từ chối do sai khóa, đường dẫn tổ chức--đội ngũ--lập trình viên--tác nhân không hợp lệ, một cấp không đủ hạn mức, vượt hạn ngạch hoặc vi phạm chính sách.
 \end{description}
 
 %-----------------------------------------------------------
@@ -84,16 +93,16 @@ Hệ thống phải đáp ứng các yêu cầu chức năng sau:
 Các yêu cầu phi chức năng quy định các thuộc tính chất lượng của hệ thống:
 
 \begin{description}
-    \item[NFR01 -- Tính nhất quán tài chính] Trong mọi giao dịch nạp tiền, phân bổ ngân sách, tạm giữ và quyết toán chi phí, hệ thống phải không để số dư hoặc ngân sách khả dụng bị âm. Khi nhiều request đồng thời tiêu thụ cùng một ngân sách, tổng giá trị được chấp nhận không được vượt quá ngân sách khả dụng.
-    \item[NFR02 -- Bảo mật khóa truy cập] API key của Agent, mật khẩu người dùng và provider credential không được lưu ở dạng rõ trong cơ sở dữ liệu hoặc log. Các chức năng quản trị khóa, provider credential và ngân sách phải được kiểm soát bằng phân quyền.
-    \item[NFR03 -- Khả năng truy vết] Mỗi request đi qua Gateway phải truy vết được tổ chức, Agent, API key, provider, model, chính sách áp dụng, usage, cost, transaction, trạng thái xử lý và thời điểm phát sinh.
-    \item[NFR04 -- Khả năng phục hồi] Khi xảy ra lỗi cơ sở dữ liệu, lỗi mạng hoặc lỗi AI Provider, hệ thống không được để lại trạng thái tài chính không thể đối soát. Giao dịch liên quan phải được hoàn trả, hoàn tất hoặc đánh dấu chờ đối soát.
-    \item[NFR05 -- Hiệu năng] Thời gian xử lý của lớp Gateway cần được đo tách biệt với thời gian chờ AI Provider. Trong phạm vi nguyên mẫu, hệ thống phải ghi nhận đủ dữ liệu thời gian để đánh giá độ trễ do xác thực, kiểm tra chính sách, kiểm tra ngân sách và ghi trace tạo ra.
+    \item[NFR01 -- Tính nhất quán tài chính] Số dư hoặc hạn mức khả dụng không được bị sử dụng vượt mức. Cùng một khóa lũy đẳng không được tạo nhiều giao dịch thành công.
+    \item[NFR02 -- Bảo mật khóa truy cập] API key của tác nhân, mật khẩu và thông tin xác thực của nhà cung cấp phải được lưu trữ ở dạng bảo vệ. Các chức năng quản trị khóa, thông tin xác thực và ngân sách phải được kiểm soát bằng phân quyền.
+    \item[NFR03 -- Khả năng truy vết] Mỗi yêu cầu phải có đủ thông tin để xác định tổ chức, đội ngũ, lập trình viên, tác nhân, API key, nhà cung cấp, mô hình, chi phí, trạng thái và thời điểm xử lý.
+    \item[NFR04 -- Khả năng phục hồi] Lỗi cơ sở dữ liệu, lỗi nhà cung cấp hoặc lỗi mạng không được để lại trạng thái tài chính không thể đối soát.
+    \item[NFR05 -- Hiệu năng] Thời gian xử lý tại Gateway phải được đo tách biệt với thời gian chờ nhà cung cấp để đánh giá độ trễ của lớp kiểm soát.
 \end{description}
 
 \section{Phân tích actor}
 
-Các actor trong hệ thống được xác định theo vai trò tương tác với \textit{AI Agent Financial Gateway}. \cref{tab:actors} mô tả phạm vi trách nhiệm của từng actor trước khi trình bày biểu đồ trường hợp sử dụng.
+Các actor được xác định theo mục tiêu và hành động thực hiện khi tương tác với \textit{AI Agent Financial Gateway}. \cref{tab:actors} trình bày vai trò của từng actor trong các quy trình nghiệp vụ chính.
 
 \begin{longtable}{|L{4cm}|L{10cm}|}
 \caption{Danh sách actor của hệ thống}
@@ -103,61 +112,63 @@ Các actor trong hệ thống được xác định theo vai trò tương tác v
 \hline
 \textbf{Actor} & \textbf{Mô tả vai trò} \\\hline
 \endhead
-Người dùng & Người dùng bên ngoài bắt đầu quy trình đăng ký tổ chức và trở thành quản trị viên đầu tiên sau khi đăng ký thành công.\\\hline
-Quản trị viên tổ chức & Vai trò quản trị trong phạm vi một tổ chức, thực hiện nạp tiền, phân bổ ngân sách, quản lý lập trình viên và theo dõi chi phí sử dụng.\\\hline
-Lập trình viên & Thành viên thuộc tổ chức, đăng ký và quản lý tác nhân AI, thiết lập hạn mức, quản lý API key và theo dõi dữ liệu sử dụng trong phạm vi được cấp.\\\hline
-AI Agent & Phần mềm tự động bên ngoài hệ thống, gọi Gateway bằng API key do Asymptotic cấp để sử dụng dịch vụ AI có kiểm soát.\\\hline
-Nhà cung cấp dịch vụ AI & Hệ thống bên ngoài xử lý yêu cầu AI do Gateway chuyển tiếp bằng credential nội bộ của Asymptotic.\\\hline
-Nhà cung cấp dịch vụ thanh toán & Hệ thống bên ngoài hỗ trợ xử lý giao dịch nạp tiền vào ví tổ chức.\\\hline
-Quản trị viên hệ thống & Vai trò vận hành hệ thống, quản lý provider, model, biểu giá và chính sách định tuyến/fallback.\\\hline
+Người dùng & Đăng ký tổ chức mới và trở thành quản trị viên đầu tiên của tổ chức sau khi đăng ký thành công.\\\hline
+Quản trị viên tổ chức & Quản lý tổ chức, ví, đội ngũ và thành viên; phân bổ hoặc thu hồi hạn mức; giám sát tác nhân và theo dõi chi phí trong phạm vi tổ chức.\\\hline
+Lập trình viên & Đăng ký và quản lý tác nhân AI, cấp hoặc thu hồi hạn mức cho các tác nhân do mình quản lý, quản lý API key và theo dõi dữ liệu sử dụng trong phạm vi được cấp.\\\hline
+AI Agent & Gửi yêu cầu tới Gateway bằng API key do Asymptotic cấp và nhận kết quả xử lý từ dịch vụ AI.\\\hline
+Nhà cung cấp dịch vụ AI & Tiếp nhận yêu cầu từ Gateway, xử lý tác vụ AI và trả kết quả cùng thông tin mức sử dụng.\\\hline
+Nhà cung cấp dịch vụ thanh toán & Xử lý thanh toán và gửi kết quả giao dịch nạp tiền cho Gateway.\\\hline
+Quản trị viên hệ thống & Quản lý nhà cung cấp, mô hình, điểm cuối, thông tin xác thực nội bộ, biểu giá và chính sách hệ thống.\\\hline
 \end{longtable}
 
 \section{Phân tích trường hợp sử dụng}
 
 \subsection*{Biểu đồ trường hợp sử dụng tổng quát}
+
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{images/2.3.1 Use case tổng quát.png}
-    \caption[Biểu đồ trường hợp sử dụng tổng quát]{Biểu đồ trường hợp sử dụng tổng quát. Nguồn: Tác giả xây dựng}\label{fig:usecase}
+    \includegraphics[height=0.78\textheight,keepaspectratio]{report_support_documentation/diagrams/chapter_2/use_cases/overview/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng tổng quát]{Biểu đồ trường hợp sử dụng tổng quát}\label{fig:usecase}
 \end{figure}
+
 \section{Đặc tả trường hợp sử dụng}
 
-Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được trình bày bằng một biểu đồ chi tiết và một bảng đặc tả tương ứng. Biểu đồ chi tiết làm rõ Actor, phạm vi tương tác và các quan hệ include/extend nếu cần; bảng đặc tả mô tả thông tin chung, luồng chính, luồng thay thế, luồng ngoại lệ và hậu điều kiện. Cách trình bày này giúp liên kết trực tiếp giữa sơ đồ và kịch bản nghiệp vụ của từng Use Case.
+Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được trình bày bằng một biểu đồ chi tiết và một bảng đặc tả tương ứng. Biểu đồ chi tiết làm rõ tác nhân, phạm vi tương tác và các quan hệ \textit{include} hoặc \textit{extend} nếu cần; bảng đặc tả mô tả thông tin chung, luồng chính, luồng thay thế, luồng ngoại lệ và hậu điều kiện. Cách trình bày này giúp liên kết trực tiếp giữa sơ đồ và kịch bản nghiệp vụ của từng trường hợp sử dụng.
 
 \subsection*{UC01 - Thực hiện yêu cầu AI qua Gateway}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC01/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC01]{Biểu đồ trường hợp sử dụng UC01 -- Thực hiện yêu cầu AI qua Gateway. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC01/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC01]{Biểu đồ trường hợp sử dụng UC01 -- Thực hiện yêu cầu AI qua Gateway}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
 \caption[Đặc tả UC01]{Đặc tả trường hợp sử dụng: UC01 -- Thực hiện yêu cầu AI qua Gateway} \\\hline
 \textbf{Tên} & UC01: Thực hiện yêu cầu AI qua Gateway \\\hline
-\textbf{Mô tả} & AI Agent muốn gửi yêu cầu qua Gateway để nhận kết quả AI theo luồng streaming trong phạm vi ngân sách được cấp.\\\hline
+\textbf{Mô tả} & AI Agent gửi yêu cầu qua Gateway để nhận kết quả AI trong phạm vi quyền, chính sách và ngân sách được cấp.\\\hline
 \textbf{Tác nhân} & Tác nhân chính: AI Agent.\newline Tác nhân hỗ trợ: Nhà cung cấp dịch vụ AI.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
 \textbf{Sự kiện kích hoạt} & AI Agent gửi yêu cầu AI tới Gateway.\\\hline
-\textbf{Điều kiện tiên quyết} & AI Agent đã được cấp API key của Gateway; chính sách ngân sách, danh mục mô hình, nhà cung cấp và biểu giá đã được thiết lập.\\\hline
+\textbf{Điều kiện tiên quyết} & Agent đang hoạt động, có API key hợp lệ, thuộc đường dẫn tổ chức--đội ngũ--lập trình viên--Agent hợp lệ; nhà cung cấp, mô hình và biểu giá đã được cấu hình.\\\hline
 \textbf{Luồng chính} &
-1. AI Agent gửi API key, khóa lũy đẳng, nội dung tác vụ và các tùy chọn thực thi.\newline
-2. Gateway xác thực yêu cầu và kiểm tra quyền thực thi.\newline
-3. Gateway kiểm tra khóa lũy đẳng và ghi nhận yêu cầu mới.\newline
-4. Gateway chọn phương án thực thi, kiểm tra chính sách và ngân sách liên quan.\newline
-5. Gateway tạm giữ ngân sách cần thiết cho yêu cầu.\newline
-6. Gateway dùng provider credential nội bộ để gọi nhà cung cấp dịch vụ AI và truyền từng phần kết quả cho AI Agent.\newline
-7. Gateway xác định mức sử dụng thực tế sau khi luồng kết quả kết thúc.\newline
-8. Gateway quyết toán chi phí, giải phóng phần còn dư và hoàn tất bản ghi lũy đẳng.\\\hline
+1. AI Agent gửi API key, khóa lũy đẳng, nội dung yêu cầu và các tùy chọn sử dụng.\newline
+2. Gateway xác thực Agent và xác định tổ chức, đội ngũ, lập trình viên chịu chi phí.\newline
+3. Gateway kiểm tra yêu cầu có trùng với yêu cầu đã xử lý hay không.\newline
+4. Gateway kiểm tra trạng thái Agent, policy, quota và ngân sách khả dụng.\newline
+5. Gateway chọn nhà cung cấp, mô hình phù hợp và chuyển tiếp yêu cầu bằng credential nội bộ.\newline
+6. Nhà cung cấp dịch vụ AI xử lý và trả kết quả cùng thông tin sử dụng.\newline
+7. Gateway ghi nhận usage, cost, trace và cập nhật trạng thái ngân sách.\newline
+8. Gateway trả kết quả AI cho Agent.\\\hline
 \textbf{Luồng thay thế} &
 \textbf{3a - Yêu cầu đã được xử lý:} 1. Gateway trả kết quả đã lưu và không gọi lại nhà cung cấp. 2. Use Case kết thúc thành công.\newline
-\textbf{4a - Chọn phương án thay thế:} 1. Gateway chọn mô hình hoặc nhà cung cấp thay thế theo chính sách. 2. Use Case tiếp tục tại bước 5.\\\hline
+\textbf{5a - Chọn phương án thay thế:} 1. Gateway chọn mô hình hoặc nhà cung cấp thay thế theo chính sách. 2. Use Case tiếp tục tại bước 6.\\\hline
 \textbf{Luồng ngoại lệ} &
-\textbf{2b - Yêu cầu hoặc quyền truy cập không hợp lệ:} 1. Gateway từ chối yêu cầu; không phát sinh tạm giữ ngân sách. 2. Use Case kết thúc không thành công.\newline
-\textbf{4b - Không đủ ngân sách và không có phương án thay thế:} 1. Gateway xác định ngân sách hiện tại không đủ cho yêu cầu và không có mô hình hoặc nhà cung cấp thay thế phù hợp. 2. Gateway từ chối yêu cầu; không gọi nhà cung cấp dịch vụ AI và không phát sinh chi phí. 3. Use Case kết thúc không thành công.\newline
-\textbf{6b - Luồng xử lý không hoàn tất:} 1. Gateway ghi nhận trạng thái lỗi, quyết toán phần chi phí đã phát sinh nếu có và chuyển giao dịch sang trạng thái có thể phục hồi hoặc đối soát. 2. Use Case kết thúc không thành công.\\\hline
-\textbf{Hậu điều kiện thành công} & Kết quả đã được truyền cho AI Agent; chi phí thực tế đã được quyết toán; phần tạm giữ dư đã được giải phóng; nhật ký thực thi và bản ghi lũy đẳng đã hoàn tất.\\\hline
-\textbf{Hậu điều kiện thất bại} & Không thực thi hoặc tính phí trùng; khoản tạm giữ được giải phóng hoặc chuyển sang trạng thái chờ xử lý; lỗi được lưu để thử lại hoặc đối soát.\\\hline
+\textbf{2b - Agent hoặc API key không hợp lệ:} 1. Gateway từ chối yêu cầu và thông báo nguyên nhân. 2. Use Case kết thúc không thành công.\newline
+\textbf{4b - Vi phạm policy, vượt quota hoặc không đủ ngân sách:} 1. Gateway từ chối yêu cầu trước khi gọi nhà cung cấp. 2. Gateway trả lý do từ chối cho Agent. 3. Use Case kết thúc không thành công.\newline
+\textbf{6b - Nhà cung cấp xử lý thất bại:} 1. Gateway ghi nhận trace lỗi và trạng thái chi phí nếu có. 2. Gateway trả thông báo lỗi cho Agent. 3. Use Case kết thúc không thành công.\\\hline
+\textbf{Hậu điều kiện thành công} & Agent nhận được kết quả AI; usage, cost, trace và trạng thái ngân sách liên quan được ghi nhận nhất quán.\\\hline
+\textbf{Hậu điều kiện thất bại} & Agent nhận được thông báo lỗi; yêu cầu không bị tính phí trùng và trạng thái tài chính vẫn có thể kiểm tra, đối soát.\\\hline
 \textbf{Liên kết yêu cầu} & FR03, FR04, FR05, FR06, FR07, FR08, FR09, FR10; NFR01, NFR02, NFR03, NFR04, NFR05.\\\hline
 \end{longtable}
 
@@ -166,8 +177,8 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC02/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC02]{Biểu đồ trường hợp sử dụng UC02 -- Nạp tiền vào ví tổ chức. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC02/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC02]{Biểu đồ trường hợp sử dụng UC02 -- Nạp tiền vào ví tổ chức}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
@@ -180,60 +191,60 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 \textbf{Điều kiện tiên quyết} & Quản trị viên tổ chức đã đăng nhập; tổ chức và ví tổ chức đang hoạt động.\\\hline
 \textbf{Luồng chính} &
 1. Quản trị viên tổ chức nhập số tiền cần nạp và chọn phương thức thanh toán.\newline
-2. Gateway kiểm tra số tiền nạp theo chính sách.\newline
-3. Gateway tạo yêu cầu thanh toán và chuyển người dùng tới nhà cung cấp thanh toán.\newline
+2. Gateway kiểm tra thông tin nạp tiền.\newline
+3. Gateway gửi yêu cầu thanh toán tới nhà cung cấp dịch vụ thanh toán.\newline
 4. Quản trị viên hoàn tất thanh toán tại nhà cung cấp.\newline
 5. Nhà cung cấp thanh toán gửi kết quả thanh toán về Gateway.\newline
-6. Gateway xác thực kết quả thanh toán và kiểm tra giao dịch chưa được xử lý trước đó.\newline
-7. Gateway cộng tiền vào ví tổ chức và ghi nhận bút toán.\newline
+6. Gateway xác thực kết quả và kiểm tra giao dịch chưa được ghi nhận trước đó.\newline
+7. Gateway cập nhật số dư ví tổ chức và ghi nhận giao dịch nạp tiền.\newline
 8. Gateway thông báo kết quả nạp tiền cho quản trị viên.\\\hline
 \textbf{Luồng thay thế} &
-\textbf{5a - Đối soát giao dịch nạp tiền:} 1. Nếu chưa nhận được callback thanh toán, Gateway giữ giao dịch ở trạng thái chờ. 2. Tiến trình đối soát tự động kiểm tra trạng thái thanh toán. 3. Nếu thanh toán thành công, Use Case tiếp tục tại bước 6.\\\hline
+\textbf{5a - Thanh toán đang chờ xác nhận:} 1. Gateway thông báo giao dịch đang chờ xử lý. 2. Khi nhận được kết quả hợp lệ, Use Case tiếp tục tại bước 6.\\\hline
 \textbf{Luồng ngoại lệ} &
 \textbf{2b - Số tiền nạp không hợp lệ:} 1. Gateway từ chối yêu cầu và thông báo nguyên nhân. 2. Use Case kết thúc không thành công.\newline
 \textbf{6b - Kết quả thanh toán không hợp lệ:} 1. Gateway từ chối cập nhật ví và ghi nhận giao dịch cần kiểm tra. 2. Use Case kết thúc không thành công.\newline
-\textbf{7b - Cập nhật ví thất bại:} 1. Gateway không thay đổi số dư ví và giữ giao dịch ở trạng thái chờ xử lý. 2. Use Case kết thúc không thành công.\\\hline
-\textbf{Hậu điều kiện thành công} & Ví tổ chức được cộng số tiền nạp hợp lệ; giao dịch nạp tiền và bút toán liên quan được ghi nhận.\\\hline
+\textbf{7b - Cập nhật ví thất bại:} 1. Gateway không thay đổi số dư ví và ghi nhận giao dịch cần xử lý. 2. Use Case kết thúc không thành công.\\\hline
+\textbf{Hậu điều kiện thành công} & Ví tổ chức được cộng số tiền hợp lệ; giao dịch nạp tiền được ghi nhận.\\\hline
 \textbf{Hậu điều kiện thất bại} & Số dư ví không thay đổi nếu thanh toán không hợp lệ; giao dịch lỗi được ghi nhận để đối soát.\\\hline
 \textbf{Liên kết yêu cầu} & FR01, FR09; NFR01, NFR02, NFR03, NFR04.\\\hline
 \end{longtable}
 
 
-\subsection*{UC03 - Quản lý ngân sách tổ chức/team/developer}
+\subsection*{UC03 - Quản lý và phân bổ ngân sách nội bộ}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC03/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC03]{Biểu đồ trường hợp sử dụng UC03 -- Quản lý ngân sách tổ chức/team/developer. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC03/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC03]{Biểu đồ trường hợp sử dụng UC03 -- Quản lý và phân bổ ngân sách nội bộ}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
-\caption[Đặc tả UC03]{Đặc tả trường hợp sử dụng: UC03 -- Quản lý ngân sách tổ chức/team/developer} \\\hline
-\textbf{Tên} & UC03: Quản lý ngân sách tổ chức/team/developer \\\hline
-\textbf{Mô tả} & Quản trị viên tổ chức muốn quản lý ngân sách đội ngũ để phân bổ hoặc thu hồi ngân sách sử dụng dịch vụ AI.\\\hline
-\textbf{Tác nhân} & Tác nhân chính: Quản trị viên tổ chức.\newline Tác nhân hỗ trợ: Không có.\\\hline
+\caption[Đặc tả UC03]{Đặc tả trường hợp sử dụng: UC03 -- Quản lý và phân bổ ngân sách nội bộ} \\\hline
+\textbf{Tên} & UC03: Quản lý và phân bổ ngân sách nội bộ \\\hline
+\textbf{Mô tả} & Quản trị viên tổ chức và lập trình viên phân bổ hoặc thu hồi hạn mức theo chuỗi tổ chức, đội ngũ, lập trình viên và AI Agent.\\\hline
+\textbf{Tác nhân} & Tác nhân chính: Quản trị viên tổ chức, Lập trình viên.\newline Tác nhân hỗ trợ: Không có.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
-\textbf{Sự kiện kích hoạt} & Quản trị viên tổ chức mở chức năng quản lý ngân sách đội ngũ.\\\hline
-\textbf{Điều kiện tiên quyết} & Tổ chức đang hoạt động; lập trình viên mục tiêu thuộc tổ chức.\\\hline
+\textbf{Sự kiện kích hoạt} & Quản trị viên tổ chức hoặc lập trình viên mở chức năng quản lý ngân sách.\\\hline
+\textbf{Điều kiện tiên quyết} & Tổ chức và ví tổ chức đang hoạt động; đội ngũ, lập trình viên hoặc Agent mục tiêu thuộc đúng đường dẫn ngân sách.\\\hline
 \textbf{Luồng chính} &
-1. Quản trị viên tổ chức mở chức năng quản lý ngân sách đội ngũ.\newline
-2. Gateway hiển thị ngân sách khả dụng của tổ chức, danh sách lập trình viên, hạn mức hiện tại và lịch sử điều chuyển liên quan.\newline
-3. Quản trị viên chọn thao tác phân bổ ngân sách cho một lập trình viên.\newline
-4. Quản trị viên nhập số tiền cần phân bổ.\newline
-5. Gateway kiểm tra số tiền phân bổ không vượt ngân sách khả dụng của tổ chức.\newline
-6. Gateway điều chuyển ngân sách từ ví tổ chức sang hạn mức của lập trình viên.\newline
-7. Gateway ghi nhận lịch sử điều chuyển và thông báo kết quả cho quản trị viên.\\\hline
+1. Gateway xác định vai trò và phạm vi ngân sách người dùng được phép quản lý.\newline
+2. Gateway hiển thị hạn mức đã cấp, đã sử dụng và còn khả dụng.\newline
+3. Người dùng chọn đối tượng đích và nhập hạn mức cần phân bổ.\newline
+4. Gateway kiểm tra quyền, quan hệ nguồn--đích và hạn mức còn khả dụng.\newline
+5. Gateway cập nhật hạn mức của cấp đích.\newline
+6. Gateway ghi lịch sử điều chuyển và thông báo kết quả.\\\hline
 \textbf{Luồng thay thế} &
-\textbf{2a - Xem ngân sách tổ chức hoặc lập trình viên:} 1. Nếu chỉ cần tra cứu, quản trị viên xem ngân sách khả dụng của tổ chức hoặc hạn mức của từng lập trình viên. 2. Use Case kết thúc thành công.\newline
-\textbf{2b - Xem lịch sử điều chuyển ngân sách:} 1. Nếu cần kiểm tra biến động ngân sách, quản trị viên chọn lịch sử điều chuyển. 2. Gateway hiển thị các lần phân bổ, thu hồi và trạng thái xử lý liên quan. 3. Use Case kết thúc thành công.\newline
-\textbf{3a - Thu hồi ngân sách:} 1. Nếu cần thu hồi ngân sách, quản trị viên chọn thao tác thu hồi ngân sách của một lập trình viên. 2. Gateway hiển thị hạn mức hiện tại và phần ngân sách có thể thu hồi của lập trình viên. 3. Quản trị viên nhập số tiền cần thu hồi. 4. Gateway kiểm tra phần ngân sách có thể thu hồi. 5. Gateway điều chuyển ngân sách khả dụng về ví tổ chức và ghi nhận lịch sử điều chuyển. 6. Gateway thông báo kết quả cho quản trị viên. 7. Use Case kết thúc thành công.\newline
-\textbf{5a - Ngân sách tổ chức không đủ:} 1. Gateway thông báo ngân sách khả dụng của tổ chức không đủ cho số tiền phân bổ. 2. Quản trị viên điều chỉnh số tiền phân bổ. 3. Use Case tiếp tục tại bước 5.\\\hline
+\textbf{2a - Xem ngân sách hoặc lịch sử:} Người dùng xem dữ liệu trong phạm vi được phân quyền và kết thúc Use Case.\newline
+\textbf{3a - Quản trị viên phân bổ:} Tổ chức cấp ngân sách cho đội ngũ hoặc đội ngũ cấp hạn mức cho lập trình viên.\newline
+\textbf{3b - Lập trình viên phân bổ:} Lập trình viên cấp hạn mức cho Agent do mình quản lý.\newline
+\textbf{3c - Thu hồi hạn mức:} Gateway hoàn trả phần hạn mức còn khả dụng về cấp nguồn trực tiếp.\\\hline
 \textbf{Luồng ngoại lệ} &
-\textbf{3b - Lập trình viên không thuộc tổ chức:} 1. Gateway từ chối thao tác và giữ nguyên trạng thái ngân sách. 2. Use Case kết thúc không thành công.\newline
-\textbf{3c - Số tiền thu hồi vượt phần khả dụng:} 1. Gateway từ chối phần thu hồi vượt quá ngân sách chưa cam kết. 2. Use Case kết thúc không thành công.\\\hline
-\textbf{Hậu điều kiện thành công} & Hạn mức của lập trình viên và ví tổ chức được cập nhật nhất quán; lịch sử điều chuyển được ghi nhận.\\\hline
-\textbf{Hậu điều kiện thất bại} & Không thay đổi số dư hoặc hạn mức khi yêu cầu không hợp lệ; lỗi được ghi nhận.\\\hline
-\textbf{Liên kết yêu cầu} & FR01, FR05, FR09, FR10; NFR01, NFR02, NFR03.\\\hline
+\textbf{2b - Người dùng không có quyền:} Gateway từ chối truy cập.\newline
+\textbf{4b - Đường dẫn ngân sách không hợp lệ hoặc nguồn không đủ:} Gateway từ chối thao tác và giữ nguyên hạn mức.\newline
+\textbf{4c - Thu hồi vượt phần khả dụng:} Gateway từ chối phần đã sử dụng hoặc đã cấp xuống cấp dưới.\\\hline
+\textbf{Hậu điều kiện thành công} & Hạn mức nguồn và đích được cập nhật nhất quán; lịch sử phân bổ hoặc thu hồi được ghi nhận.\\\hline
+\textbf{Hậu điều kiện thất bại} & Không thay đổi hạn mức khi yêu cầu không hợp lệ hoặc vượt quá phần khả dụng.\\\hline
+\textbf{Liên kết yêu cầu} & FR01, FR05, FR09, FR10; NFR01, NFR02, NFR03, NFR04.\\\hline
 \end{longtable}
 
 
@@ -241,37 +252,33 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC04/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC04]{Biểu đồ trường hợp sử dụng UC04 -- Đăng ký và quản lý AI Agent. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC04/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC04]{Biểu đồ trường hợp sử dụng UC04 -- Đăng ký và quản lý AI Agent}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
 \caption[Đặc tả UC04]{Đặc tả trường hợp sử dụng: UC04 -- Đăng ký và quản lý AI Agent} \\\hline
 \textbf{Tên} & UC04: Đăng ký và quản lý AI Agent \\\hline
-\textbf{Mô tả} & Lập trình viên muốn đăng ký và quản lý tác nhân AI để hệ thống có thể kiểm soát trạng thái, hạn mức và chi phí phát sinh từ các yêu cầu AI.\\\hline
-\textbf{Tác nhân} & Tác nhân chính: Lập trình viên.\newline Tác nhân hỗ trợ: Không có.\\\hline
+\textbf{Mô tả} & Lập trình viên đăng ký AI Agent bên ngoài do mình phát triển hoặc quản lý; quản trị viên tổ chức giám sát và bàn giao Agent khi cần.\\\hline
+\textbf{Tác nhân} & Tác nhân chính: Lập trình viên.\newline Tác nhân hỗ trợ: Quản trị viên tổ chức.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
-\textbf{Sự kiện kích hoạt} & Lập trình viên mở chức năng đăng ký và quản lý tác nhân AI.\\\hline
-\textbf{Điều kiện tiên quyết} & Lập trình viên đã đăng nhập và thuộc một tổ chức đang hoạt động.\\\hline
+\textbf{Sự kiện kích hoạt} & Lập trình viên hoặc quản trị viên tổ chức mở chức năng đăng ký và quản lý AI Agent.\\\hline
+\textbf{Điều kiện tiên quyết} & Người dùng đã đăng nhập và có quyền quản lý Agent; tổ chức đang hoạt động; lập trình viên quản lý thuộc một đội ngũ hợp lệ.\\\hline
 \textbf{Luồng chính} &
-1. Lập trình viên mở chức năng đăng ký và quản lý tác nhân AI.\newline
-2. Lập trình viên yêu cầu đăng ký tác nhân AI mới.\newline
-3. Lập trình viên nhập tên, mô tả và phạm vi sử dụng dự kiến của tác nhân.\newline
-4. Gateway kiểm tra thông tin đăng ký và gắn tác nhân với tổ chức của lập trình viên.\newline
-5. Gateway tạo bản ghi tác nhân AI ở trạng thái hoạt động ban đầu.\newline
-6. Gateway thông báo đăng ký thành công và cho phép lập trình viên tiếp tục thiết lập hạn mức hoặc API key.\\\hline
+1. Lập trình viên yêu cầu đăng ký Agent mới và nhập thông tin Agent.\newline
+2. Gateway kiểm tra quyền, trạng thái và quan hệ đội ngũ của lập trình viên.\newline
+3. Gateway tạo Agent, gắn với tổ chức và chính lập trình viên đăng ký ở trạng thái chưa kích hoạt.\newline
+4. Gateway thông báo đăng ký thành công.\\\hline
 \textbf{Luồng thay thế} &
-\textbf{2a - Xem thông tin tác nhân AI:} 1. Nếu chỉ cần tra cứu, lập trình viên xem thông tin đăng ký, hạn mức, phần đã sử dụng và trạng thái hiện tại của tác nhân AI. 2. Use Case kết thúc thành công.\newline
-\textbf{3a - Thiết lập hạn mức tác nhân AI:} 1. Nếu cần kiểm soát chi phí, lập trình viên chọn một tác nhân AI đã đăng ký. 2. Gateway hiển thị hạn mức khả dụng của lập trình viên và chính sách hiện tại của tác nhân. 3. Lập trình viên nhập hạn mức và chu kỳ áp dụng. 4. Gateway kiểm tra hạn mức mới trong phạm vi ngân sách của lập trình viên. 5. Gateway lưu chính sách hạn mức mới và thông báo kết quả cho lập trình viên. 6. Use Case kết thúc thành công.\newline
-\textbf{3b - Cập nhật chu kỳ ngân sách:} 1. Nếu cần thay đổi chu kỳ áp dụng, lập trình viên chọn thao tác cập nhật chu kỳ ngân sách. 2. Lập trình viên nhập chu kỳ mới. 3. Gateway kiểm tra chu kỳ hợp lệ và lưu chính sách mới. 4. Use Case kết thúc thành công.\newline
-\textbf{3c - Tạm dừng tác nhân AI:} 1. Nếu cần dừng phát sinh chi phí mới, lập trình viên chọn tác nhân AI sau khi xem trạng thái hạn mức hiện tại. 2. Lập trình viên chọn thao tác tạm dừng tác nhân AI. 3. Gateway cập nhật trạng thái tác nhân và chặn các yêu cầu AI mới từ tác nhân này. 4. Use Case kết thúc thành công.\newline
-\textbf{5a - Hạn mức mới thấp hơn mức đã sử dụng:} 1. Gateway ghi nhận chính sách mới nhưng chặn các yêu cầu mới vượt ngưỡng trong chu kỳ hiện tại. 2. Use Case kết thúc thành công.\\\hline
+\textbf{1a - Xem hoặc cập nhật Agent:} Người dùng có quyền xem hoặc cập nhật thông tin không thuộc ngân sách và API key.\newline
+\textbf{1b - Kích hoạt Agent:} Gateway kiểm tra đường dẫn ngân sách, hạn mức và API key trước khi kích hoạt.\newline
+\textbf{1c - Tạm dừng Agent:} Gateway chuyển Agent sang trạng thái tạm dừng và chặn yêu cầu mới.\newline
+\textbf{1d - Bàn giao Agent:} Quản trị viên tổ chức chọn lập trình viên mới; hạn mức được xử lý qua UC03 trước khi cập nhật quan hệ quản lý.\\\hline
 \textbf{Luồng ngoại lệ} &
-\textbf{5b - Hạn mức vượt phạm vi được cấp:} 1. Gateway từ chối yêu cầu và giữ nguyên chính sách hiện tại. 2. Use Case kết thúc không thành công.\newline
-\textbf{2b - Tác nhân không thuộc quyền quản lý:} 1. Gateway từ chối truy cập. 2. Use Case kết thúc không thành công.\newline
-\textbf{4b - Thông tin tác nhân không hợp lệ:} 1. Gateway từ chối đăng ký tác nhân và thông báo trường dữ liệu cần điều chỉnh. 2. Use Case kết thúc không thành công.\\\hline
-\textbf{Hậu điều kiện thành công} & Tác nhân AI được đăng ký hoặc cấu hình quản lý được cập nhật; trạng thái và chính sách hạn mức sẵn sàng cho UC01 kiểm soát yêu cầu.\\\hline
-\textbf{Hậu điều kiện thất bại} & Chính sách hiện tại không thay đổi nếu yêu cầu không hợp lệ.\\\hline
+\textbf{2b - Thông tin, quyền hoặc quan hệ quản lý không hợp lệ:} Gateway từ chối đăng ký hoặc cập nhật.\newline
+\textbf{1e - Không thể kích hoạt Agent:} Gateway thông báo đường dẫn ngân sách, hạn mức hoặc API key còn thiếu.\\\hline
+\textbf{Hậu điều kiện thành công} & Agent được đăng ký hoặc cập nhật; Agent có đường dẫn tổ chức--đội ngũ--lập trình viên rõ ràng.\\\hline
+\textbf{Hậu điều kiện thất bại} & Không tạo hoặc thay đổi Agent khi dữ liệu, quyền hoặc quan hệ quản lý không hợp lệ.\\\hline
 \textbf{Liên kết yêu cầu} & FR02, FR05, FR09, FR10; NFR02, NFR03.\\\hline
 \end{longtable}
 
@@ -280,29 +287,28 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC05/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC05]{Biểu đồ trường hợp sử dụng UC05 -- Quản lý API key của Agent. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC05/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC05]{Biểu đồ trường hợp sử dụng UC05 -- Quản lý API key của Agent}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
 \caption[Đặc tả UC05]{Đặc tả trường hợp sử dụng: UC05 -- Quản lý API key của Agent} \\\hline
 \textbf{Tên} & UC05: Quản lý API key của Agent \\\hline
 \textbf{Mô tả} & Lập trình viên muốn quản lý API key của Agent để kiểm soát quyền gọi Gateway của AI Agent.\\\hline
-\textbf{Tác nhân} & Tác nhân chính: Lập trình viên.\newline Tác nhân hỗ trợ: Không có.\\\hline
+\textbf{Tác nhân} & Tác nhân chính: Lập trình viên, Quản trị viên tổ chức.\newline Tác nhân hỗ trợ: Không có.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
-\textbf{Sự kiện kích hoạt} & Lập trình viên yêu cầu quản lý API key của một AI Agent.\\\hline
-\textbf{Điều kiện tiên quyết} & Lập trình viên đã đăng nhập; AI Agent thuộc quyền quản lý của lập trình viên.\\\hline
+\textbf{Sự kiện kích hoạt} & Lập trình viên hoặc quản trị viên tổ chức mở chức năng quản lý API key của Agent.\\\hline
+\textbf{Điều kiện tiên quyết} & Người dùng đã đăng nhập; AI Agent thuộc phạm vi quản lý hợp lệ và có đường dẫn tổ chức--đội ngũ--lập trình viên rõ ràng.\\\hline
 \textbf{Luồng chính} &
-1. Lập trình viên chọn AI Agent cần quản lý API key.\newline
+1. Người dùng chọn AI Agent cần quản lý API key.\newline
 2. Gateway hiển thị danh sách API key hiện có của Agent.\newline
-3. Lập trình viên yêu cầu tạo API key mới và nhập thông tin mô tả.\newline
-4. Gateway tạo API key mới cho Agent.\newline
-5. Gateway hiển thị giá trị API key một lần cho lập trình viên.\newline
-6. Lập trình viên xác nhận đã lưu API key.\newline
-7. Gateway kích hoạt API key và ghi nhận sự kiện bảo mật.\\\hline
+3. Người dùng yêu cầu tạo API key mới và nhập thông tin mô tả.\newline
+4. Gateway tạo, kích hoạt API key và gắn khóa với Agent.\newline
+5. Gateway hiển thị giá trị API key một lần cho người dùng.\newline
+6. Gateway ghi nhận sự kiện tạo khóa.\\\hline
 \textbf{Luồng thay thế} &
-\textbf{2a - Xem danh sách API key:} 1. Nếu chỉ cần tra cứu, lập trình viên xem danh sách API key và trạng thái của từng khóa. 2. Use Case kết thúc thành công.\newline
-\textbf{3a - Thu hồi API key:} 1. Nếu cần thu hồi quyền truy cập, lập trình viên chọn một API key đang hoạt động từ danh sách API key. 2. Gateway thu hồi API key và ngăn khóa này xác thực các yêu cầu AI mới. 3. Use Case kết thúc thành công.\\\hline
+\textbf{2a - Xem danh sách API key:} 1. Người dùng xem danh sách API key và trạng thái của từng khóa. 2. Use Case kết thúc thành công.\newline
+\textbf{3a - Thu hồi API key:} 1. Người dùng chọn một API key đang hoạt động. 2. Gateway thu hồi khóa và ngăn khóa xác thực yêu cầu mới. 3. Use Case kết thúc thành công.\\\hline
 \textbf{Luồng ngoại lệ} &
 \textbf{1b - Agent không thuộc quyền quản lý:} 1. Gateway từ chối truy cập. 2. Use Case kết thúc không thành công.\newline
 \textbf{4b - Không thể tạo API key:} 1. Gateway thông báo lỗi và không kích hoạt API key mới. 2. Use Case kết thúc không thành công.\\\hline
@@ -316,8 +322,8 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC06/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC06]{Biểu đồ trường hợp sử dụng UC06 -- Theo dõi giao dịch, usage, cost và trace. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC06/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC06]{Biểu đồ trường hợp sử dụng UC06 -- Theo dõi giao dịch, usage, cost và trace}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
@@ -332,7 +338,7 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 1. Người dùng mở chức năng theo dõi giao dịch và mức độ sử dụng.\newline
 2. Gateway xác định vai trò và phạm vi dữ liệu được phép xem.\newline
 3. Người dùng chọn tra cứu lịch sử giao dịch và nhập điều kiện lọc nếu cần.\newline
-4. Gateway truy xuất giao dịch, bút toán và nhật ký thực thi phù hợp.\newline
+4. Gateway truy xuất giao dịch, usage, cost và trace theo tổ chức, đội ngũ, lập trình viên và Agent trong phạm vi quyền.\newline
 5. Gateway hiển thị danh sách giao dịch và các chỉ số liên quan.\\\hline
 \textbf{Luồng thay thế} &
 \textbf{2a - Xem tổng quan mức sử dụng:} 1. Nếu chỉ cần tổng quan, người dùng chọn xem mức sử dụng theo phạm vi được phân quyền. 2. Gateway tổng hợp chi phí, usage và trạng thái giao dịch. 3. Gateway hiển thị chỉ số tổng quan. 4. Use Case kết thúc thành công.\newline
@@ -353,8 +359,8 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC07/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC07]{Biểu đồ trường hợp sử dụng UC07 -- Đăng ký tổ chức. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC07/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC07]{Biểu đồ trường hợp sử dụng UC07 -- Đăng ký tổ chức}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
@@ -364,7 +370,7 @@ Sau biểu đồ tổng quát, mỗi trường hợp sử dụng chính được
 \textbf{Tác nhân} & Tác nhân chính: Người dùng.\newline Tác nhân hỗ trợ: Không có.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
 \textbf{Sự kiện kích hoạt} & Người dùng gửi yêu cầu tạo tổ chức.\\\hline
-\textbf{Điều kiện tiên quyết} & Người dùng đã có danh tính hợp lệ; thông tin tổ chức chưa tồn tại trong hệ thống.\\\hline
+\textbf{Điều kiện tiên quyết} & Người dùng đã có danh tính hợp lệ trong hệ thống.\\\hline
 \textbf{Luồng chính} &
 1. Người dùng nhập thông tin tổ chức cần đăng ký.\newline
 2. Gateway kiểm tra tính hợp lệ và tính duy nhất của thông tin tổ chức.\newline
@@ -383,73 +389,78 @@ Không có.\\\hline
 \end{longtable}
 
 
-\subsection*{UC08 - Quản lý lập trình viên/thành viên tổ chức}
+\subsection*{UC08 - Quản lý đội ngũ và thành viên tổ chức}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC08/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC08]{Biểu đồ trường hợp sử dụng UC08 -- Quản lý lập trình viên/thành viên tổ chức. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC08/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC08]{Biểu đồ trường hợp sử dụng UC08 -- Quản lý đội ngũ và thành viên tổ chức}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
-\caption[Đặc tả UC08]{Đặc tả trường hợp sử dụng: UC08 -- Quản lý lập trình viên/thành viên tổ chức} \\\hline
-\textbf{Tên} & UC08: Quản lý lập trình viên/thành viên tổ chức \\\hline
-\textbf{Mô tả} & Quản trị viên tổ chức muốn quản lý lập trình viên để kiểm soát thành viên, quyền truy cập và ngân sách trong tổ chức.\\\hline
+\caption[Đặc tả UC08]{Đặc tả trường hợp sử dụng: UC08 -- Quản lý đội ngũ và thành viên tổ chức} \\\hline
+\textbf{Tên} & UC08: Quản lý đội ngũ và thành viên tổ chức \\\hline
+\textbf{Mô tả} & Quản trị viên tổ chức quản lý đội ngũ, lập trình viên, quan hệ thành viên và việc bàn giao Agent khi cơ cấu tổ chức thay đổi.\\\hline
 \textbf{Tác nhân} & Tác nhân chính: Quản trị viên tổ chức.\newline Tác nhân hỗ trợ: Không có.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
-\textbf{Sự kiện kích hoạt} & Quản trị viên tổ chức yêu cầu thay đổi danh sách lập trình viên.\\\hline
+\textbf{Sự kiện kích hoạt} & Quản trị viên tổ chức mở chức năng quản lý đội ngũ và thành viên.\\\hline
 \textbf{Điều kiện tiên quyết} & Quản trị viên tổ chức đã đăng nhập; tổ chức đang hoạt động.\\\hline
 \textbf{Luồng chính} &
-1. Quản trị viên tổ chức mở chức năng quản lý lập trình viên.\newline
-2. Gateway hiển thị danh sách lập trình viên và trạng thái hiện tại.\newline
-3. Quản trị viên chọn thao tác tạo lập trình viên mới.\newline
-4. Quản trị viên nhập thông tin lập trình viên.\newline
-5. Gateway kiểm tra thông tin tài khoản và phạm vi tổ chức.\newline
-6. Gateway tạo tài khoản lập trình viên, gắn với tổ chức và thiết lập hạn mức ban đầu.\newline
-7. Gateway thông báo kết quả và cập nhật danh sách thành viên.\\\hline
+1. Gateway hiển thị danh sách đội ngũ, lập trình viên, trạng thái và quan hệ hiện hành.\newline
+2. Quản trị viên chọn tạo đội ngũ mới và nhập thông tin.\newline
+3. Gateway kiểm tra dữ liệu và tính duy nhất trong tổ chức.\newline
+4. Gateway tạo đội ngũ ở trạng thái hoạt động.\newline
+5. Gateway ghi lịch sử thay đổi và thông báo kết quả.\\\hline
 \textbf{Luồng thay thế} &
-\textbf{2a - Xem chi tiết lập trình viên:} 1. Nếu cần tra cứu, quản trị viên chọn một lập trình viên trong danh sách. 2. Gateway hiển thị thông tin tài khoản, hạn mức, Agent liên quan và trạng thái API key. 3. Use Case kết thúc thành công.\newline
-\textbf{3a - Cập nhật thông tin lập trình viên:} 1. Nếu cần thay đổi thông tin, quản trị viên chọn lập trình viên cần cập nhật. 2. Quản trị viên nhập thông tin cần thay đổi. 3. Gateway kiểm tra dữ liệu và cập nhật thông tin lập trình viên. 4. Use Case kết thúc thành công.\newline
-\textbf{3b - Vô hiệu hóa lập trình viên:} 1. Nếu cần ngừng quyền sử dụng, quản trị viên chọn lập trình viên cần vô hiệu hóa. 2. Gateway ngăn lập trình viên thực hiện thao tác mới. 3. Gateway thực hiện UC05.3 để thu hồi các API key liên quan. 4. Gateway thu hồi phần ngân sách khả dụng về ví tổ chức. 5. Use Case kết thúc thành công.\\\hline
+\textbf{1a - Thêm hoặc cập nhật lập trình viên:} Gateway tạo vai trò lập trình viên, cập nhật thông tin và gán vào một đội ngũ.\newline
+\textbf{1b - Chuyển lập trình viên:} Gateway kiểm tra hạn mức và các Agent liên quan; quản trị viên xử lý ngân sách qua UC03 trước khi đổi đội ngũ.\newline
+\textbf{1c - Bàn giao Agent:} Gateway xử lý hạn mức qua UC03 và quan hệ quản lý qua UC04.\newline
+\textbf{1d - Vô hiệu hóa lập trình viên hoặc đội ngũ:} Gateway chặn yêu cầu mới, yêu cầu bàn giao Agent và xử lý phần hạn mức còn lại.\\\hline
 \textbf{Luồng ngoại lệ} &
-\textbf{5b - Email đã tồn tại hoặc dữ liệu không hợp lệ:} 1. Gateway từ chối yêu cầu và thông báo nguyên nhân. 2. Use Case kết thúc không thành công.\newline
-\textbf{3c - Lập trình viên còn giao dịch chưa quyết toán:} 1. Khi vô hiệu hóa lập trình viên còn giao dịch chưa quyết toán, Gateway chặn yêu cầu mới và chuyển phần ngân sách liên quan sang chờ xử lý. 2. Use Case kết thúc không thành công một phần.\\\hline
-\textbf{Hậu điều kiện thành công} & Tài khoản lập trình viên và quyền truy cập liên quan được cập nhật theo yêu cầu.\\\hline
-\textbf{Hậu điều kiện thất bại} & Không thay đổi tài khoản hoặc ngân sách nếu yêu cầu không hợp lệ.\\\hline
-\textbf{Liên kết yêu cầu} & FR01, FR02, FR05, FR09, FR10; NFR01, NFR02, NFR03.\\\hline
+\textbf{3b - Dữ liệu bị trùng hoặc không hợp lệ:} Gateway từ chối thay đổi.\newline
+\textbf{1e - Còn yêu cầu hoặc giao dịch chưa hoàn tất:} Gateway chặn thao tác chuyển hoặc vô hiệu hóa.\newline
+\textbf{1f - Đường dẫn ngân sách sau thay đổi không hợp lệ:} Gateway giữ nguyên dữ liệu cơ cấu hiện tại.\\\hline
+\textbf{Hậu điều kiện thành công} & Đội ngũ, thành viên và quan hệ quản lý được cập nhật nhất quán; đường dẫn ngân sách của Agent vẫn hợp lệ.\\\hline
+\textbf{Hậu điều kiện thất bại} & Không thay đổi cơ cấu nếu còn hạn mức hoặc giao dịch chưa được xử lý an toàn.\\\hline
+\textbf{Liên kết yêu cầu} & FR01, FR02, FR05, FR09, FR10; NFR01, NFR02, NFR03, NFR04.\\\hline
 \end{longtable}
 
 
-\subsection*{UC09 - Quản lý model, provider và chính sách giá}
+\subsection*{UC09 - Quản lý provider, model và chính sách giá}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.92\textwidth]{report_support_documentation/use_cases/UC09/diagram.png}
-    \caption[Biểu đồ trường hợp sử dụng UC09]{Biểu đồ trường hợp sử dụng UC09 -- Quản lý model, provider và chính sách giá. Nguồn: Tác giả xây dựng}
+    \includegraphics[width=0.92\textwidth]{report_support_documentation/diagrams/chapter_2/use_cases/UC09/diagram.png}
+    \caption[Biểu đồ trường hợp sử dụng UC09]{Biểu đồ trường hợp sử dụng UC09 -- Quản lý provider, model và chính sách giá}
 \end{figure}
 
 \begin{longtable}{|L{4.2cm}|L{9.5cm}|}
-\caption[Đặc tả UC09]{Đặc tả trường hợp sử dụng: UC09 -- Quản lý model, provider và chính sách giá} \\\hline
-\textbf{Tên} & UC09: Quản lý model, provider và chính sách giá \\\hline
+\caption[Đặc tả UC09]{Đặc tả trường hợp sử dụng: UC09 -- Quản lý provider, model và chính sách giá} \\\hline
+\textbf{Tên} & UC09: Quản lý provider, model và chính sách giá \\\hline
 \textbf{Mô tả} & Quản trị viên hệ thống muốn quản lý provider, model và chính sách giá để Gateway định tuyến, ước lượng chi phí và tính phí request AI.\\\hline
 \textbf{Tác nhân} & Tác nhân chính: Quản trị viên hệ thống.\newline Tác nhân hỗ trợ: Không có.\\\hline
 \textbf{Mức ưu tiên} & Bắt buộc.\\\hline
 \textbf{Sự kiện kích hoạt} & Quản trị viên hệ thống yêu cầu cập nhật provider, model hoặc chính sách giá.\\\hline
 \textbf{Điều kiện tiên quyết} & Quản trị viên hệ thống đã đăng nhập.\\\hline
 \textbf{Luồng chính} &
-1. Quản trị viên hệ thống mở chức năng quản lý model, provider và chính sách giá.\newline
-2. Gateway hiển thị trạng thái provider, model, provider credential và chính sách giá hiện tại.\newline
+1. Quản trị viên hệ thống mở chức năng quản lý provider, model và chính sách giá.\newline
+2. Gateway hiển thị danh mục provider, model, trạng thái credential và chính sách giá hiện tại.\newline
 3. Quản trị viên chọn thao tác cập nhật thông tin model hoặc provider.\newline
 4. Quản trị viên nhập thông tin cần thay đổi.\newline
 5. Gateway kiểm tra cấu hình mới theo quy tắc hợp lệ.\newline
 6. Gateway lưu cấu hình model hoặc provider.\newline
 7. Gateway thông báo cấu hình đã sẵn sàng cho các yêu cầu tiếp theo.\\\hline
 \textbf{Luồng thay thế} &
-\textbf{2a - Xem danh mục model/provider:} 1. Nếu chỉ cần tra cứu, quản trị viên hệ thống xem danh mục model, provider, trạng thái hỗ trợ và biểu giá hiện tại. 2. Use Case kết thúc thành công.\newline
-\textbf{3a - Thêm model/provider:} 1. Nếu cần bổ sung cấu hình mới, quản trị viên hệ thống chọn thao tác thêm model hoặc provider. 2. Quản trị viên nhập thông tin cấu hình, trạng thái hỗ trợ và biểu giá ban đầu nếu có. 3. Gateway kiểm tra dữ liệu và lưu cấu hình mới. 4. Use Case kết thúc thành công.\newline
-\textbf{3b - Vô hiệu hóa model:} 1. Nếu cần ngừng sử dụng một model, quản trị viên hệ thống chọn model từ danh mục model/provider. 2. Quản trị viên hệ thống chọn thao tác vô hiệu hóa model. 3. Gateway ngừng chọn model này cho yêu cầu mới. 4. Use Case kết thúc thành công.\newline
-\textbf{3c - Cập nhật biểu giá:} 1. Nếu cần thay đổi biểu giá, quản trị viên hệ thống chọn model hoặc provider từ danh mục. 2. Quản trị viên hệ thống nhập giá mới và thời điểm hiệu lực. 3. Gateway lưu biểu giá mới, không làm thay đổi các giao dịch đã quyết toán. 4. Use Case kết thúc thành công.\newline
-\textbf{3d - Thiết lập chính sách fallback:} 1. Nếu cần phương án dự phòng, quản trị viên hệ thống chọn model hoặc provider gốc từ danh mục. 2. Quản trị viên hệ thống cấu hình model hoặc provider thay thế. 3. Gateway lưu chính sách fallback để UC01 sử dụng khi model ban đầu không khả dụng hoặc không phù hợp với ngân sách. 4. Use Case kết thúc thành công.\newline
+\textbf{2a - Xem danh mục model/provider:} 1. Nếu chỉ cần tra cứu, quản trị viên hệ thống xem danh mục model, provider, trạng thái hỗ trợ và biểu giá hiện tại. 2. Use Case kết thúc thành công.\\\hline
+&
+\textbf{3a - Thêm model/provider:} 1. Nếu cần bổ sung cấu hình mới, quản trị viên hệ thống chọn thao tác thêm model hoặc provider. 2. Quản trị viên nhập thông tin cấu hình, trạng thái hỗ trợ và biểu giá ban đầu nếu có. 3. Gateway kiểm tra dữ liệu và lưu cấu hình mới. 4. Use Case kết thúc thành công.\\\hline
+&
+\textbf{3b - Vô hiệu hóa model:} 1. Nếu cần ngừng sử dụng một model, quản trị viên hệ thống chọn model từ danh mục model/provider. 2. Quản trị viên hệ thống chọn thao tác vô hiệu hóa model. 3. Gateway ngừng chọn model này cho yêu cầu mới. 4. Use Case kết thúc thành công.\\\hline
+&
+\textbf{3c - Cập nhật biểu giá:} 1. Nếu cần thay đổi biểu giá, quản trị viên hệ thống chọn model hoặc provider từ danh mục. 2. Quản trị viên hệ thống nhập giá mới và thời điểm hiệu lực. 3. Gateway lưu biểu giá mới, không làm thay đổi các giao dịch đã quyết toán. 4. Use Case kết thúc thành công.\\\hline
+&
+\textbf{3d - Thiết lập chính sách fallback:} 1. Nếu cần phương án dự phòng, quản trị viên hệ thống chọn model hoặc provider gốc từ danh mục. 2. Quản trị viên hệ thống cấu hình model hoặc provider thay thế. 3. Gateway lưu chính sách fallback để UC01 sử dụng khi model ban đầu không khả dụng hoặc không phù hợp với ngân sách. 4. Use Case kết thúc thành công.\\\hline
+&
 \textbf{3e - Model đang được sử dụng trong request đang xử lý:} 1. Nếu model đang được request sử dụng, Gateway áp dụng thay đổi cho yêu cầu mới và giữ nguyên cấu hình cũ cho request đang xử lý. 2. Use Case kết thúc thành công có điều kiện.\\\hline
 \textbf{Luồng ngoại lệ} &
 \textbf{5b - Cấu hình không hợp lệ:} 1. Gateway từ chối thay đổi và giữ nguyên cấu hình hiện tại. 2. Use Case kết thúc không thành công.\\\hline
@@ -460,33 +471,33 @@ Không có.\\\hline
 
 \section{Mô hình hóa luồng nghiệp vụ}
 
-Các biểu đồ hoạt động mô tả thứ tự xử lý, điều kiện rẽ nhánh và trạng thái kết thúc của những luồng nghiệp vụ quan trọng trong hệ thống. Ba luồng được ưu tiên gồm: AI Agent gọi dịch vụ AI qua Gateway, đăng ký AI Agent và cấp API key, nạp tiền và phân bổ ngân sách.
+Các biểu đồ hoạt động mô tả thứ tự xử lý, điều kiện rẽ nhánh và trạng thái kết thúc của những luồng nghiệp vụ quan trọng trong hệ thống. Ba luồng được ưu tiên gồm: AI Agent gọi dịch vụ AI qua Gateway, Developer đăng ký AI Agent bên ngoài, nạp tiền và phân bổ ngân sách.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[height=0.86\textheight,keepaspectratio]{report_support_documentation/activity_diagrams/UC01/activity.png}
-    \caption[Biểu đồ hoạt động UC01]{Biểu đồ hoạt động UC01 -- Luồng xử lý yêu cầu AI qua Gateway. Nguồn: Tác giả xây dựng}\label{fig:activity-uc01-ai-request}
+    \includegraphics[width=\textwidth,height=0.86\textheight,keepaspectratio]{report_support_documentation/diagrams/chapter_2/activity_diagrams/UC01/activity.png}
+    \caption[Biểu đồ hoạt động UC01]{Biểu đồ hoạt động UC01 -- Luồng xử lý yêu cầu AI qua Gateway}\label{fig:activity-uc01-ai-request}
 \end{figure}
 
-\cref{fig:activity-uc01-ai-request} cho thấy yêu cầu bị từ chối sớm nếu xác thực thất bại, khóa lũy đẳng xung đột hoặc ngân sách không đáp ứng điều kiện. Nếu yêu cầu đã hoàn tất trước đó, hệ thống trả kết quả đã lưu mà không tạo giao dịch mới.
-
-Với yêu cầu mới, Gateway ước lượng chi phí, xác định giới hạn đầu ra và tạm giữ ngân sách trước khi gọi nhà cung cấp. Sau khi nhận kết quả, hệ thống tính chi phí thực tế, quyết toán phần đã sử dụng, giải phóng phần còn dư và lưu nhật ký thực thi. Luồng này mô tả thiết kế mục tiêu; nguyên mẫu hiện tại mới triển khai thu phí cố định trước khi chuyển tiếp yêu cầu.
+\cref{fig:activity-uc01-ai-request} mô tả tương tác giữa AI Agent, Asymptotic Gateway và AI Provider. Gateway chỉ chuyển yêu cầu tới nhà cung cấp khi Agent hợp lệ và đáp ứng chính sách, quota, ngân sách. Sau khi nhà cung cấp xử lý, Gateway ghi nhận mức sử dụng, chi phí và trả kết quả hoặc thông báo lỗi cho Agent.
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[height=0.82\textheight,keepaspectratio]{report_support_documentation/activity_diagrams/UC04_agent_registration/activity.png}
-    \caption[Biểu đồ hoạt động đăng ký AI Agent]{Biểu đồ hoạt động đăng ký AI Agent và cấp API key. Nguồn: Tác giả xây dựng}\label{fig:activity-agent-registration}
+    \includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{report_support_documentation/diagrams/chapter_2/activity_diagrams/UC04_agent_registration/activity.png}
+    \caption[Biểu đồ hoạt động đăng ký AI Agent]{Biểu đồ hoạt động lập trình viên đăng ký AI Agent bên ngoài}\label{fig:activity-agent-registration}
 \end{figure}
 
-\cref{fig:activity-agent-registration} làm rõ hệ thống không tạo, huấn luyện hoặc vận hành AI Agent. Gateway chỉ ghi nhận Agent bên ngoài vào hệ thống, gắn Agent với tổ chức, sinh API key do Asymptotic quản lý và trả khóa cho người dùng có quyền để cấu hình Agent ở bên ngoài.
+\cref{fig:activity-agent-registration} làm rõ hệ thống không tạo, huấn luyện hoặc vận hành AI Agent. Lập trình viên cung cấp thông tin Agent bên ngoài; Gateway kiểm tra quyền và dữ liệu trước khi đăng ký Agent vào tổ chức, gắn người quản lý và trả kết quả đăng ký.
 
-\begin{figure}[htbp]
+\begin{sidewaysfigure}[p]
     \centering
-    \includegraphics[height=0.82\textheight,keepaspectratio]{report_support_documentation/activity_diagrams/finance_budget/activity.png}
-    \caption[Biểu đồ hoạt động nạp tiền và phân bổ ngân sách]{Biểu đồ hoạt động nạp tiền và phân bổ ngân sách. Nguồn: Tác giả xây dựng}\label{fig:activity-finance-budget}
-\end{figure}
+    \includegraphics[width=0.92\textheight,height=0.92\textwidth,keepaspectratio]{report_support_documentation/diagrams/chapter_2/activity_diagrams/finance_budget/activity.png}
+    \caption[Biểu đồ hoạt động nạp tiền và phân bổ ngân sách]{Biểu đồ hoạt động nạp tiền và phân bổ ngân sách}\label{fig:activity-finance-budget}
+\end{sidewaysfigure}
 
-\cref{fig:activity-finance-budget} mô tả luồng tài chính trước khi Agent phát sinh chi phí. Tổ chức cần nạp tiền vào ví, Gateway xác thực kết quả thanh toán và ghi nhận bút toán, sau đó quản trị viên tổ chức phân bổ ngân sách cho Agent hoặc nhóm sử dụng phù hợp.
+\cref{fig:activity-finance-budget} mô tả các nghiệp vụ tài chính có thể được thực hiện độc lập. UC02 ghi nhận tiền thật tại ví tổ chức sau khi nhà cung cấp thanh toán xác nhận. UC03 phân bổ hạn mức qua từng quan hệ liền kề từ tổ chức đến đội ngũ, từ đội ngũ đến lập trình viên hoặc từ lập trình viên đến Agent; việc phân bổ không tạo thêm ví độc lập.
+
+\clearpage
 
 \section*{Kết luận chương}
 

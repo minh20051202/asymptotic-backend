@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Lập trình viên" as Developer
+
+rectangle "Đăng ký và quản lý AI Agent" {
+  usecase "Đăng ký AI Agent" as RegisterAgent
+  usecase "Xem và cập nhật\nthông tin Agent" as ManageAgent
+  usecase "Kích hoạt hoặc\ntạm dừng Agent" as ChangeStatus
+  usecase "Bàn giao Agent cho\nlập trình viên khác" as TransferAgent
+}
+
+Developer -- RegisterAgent
+Developer -- ManageAgent
+Developer -- ChangeStatus
+
+OrgAdmin -- ManageAgent
+OrgAdmin -- ChangeStatus
+OrgAdmin -- TransferAgent
+@enduml

@@ -1,0 +1,81 @@
+@startuml
+top to bottom direction
+
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam linetype polyline
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam ActorBorderColor #334155
+skinparam ActorFontColor #0F172A
+skinparam rectangle {
+  BorderColor #2563A6
+  FontColor #0F172A
+}
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  FontColor #0F172A
+}
+
+title Biểu đồ trường hợp sử dụng tổng quát
+
+actor "Người dùng" as User
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Lập trình viên" as Developer
+actor "AI Agent" as Agent
+actor "Quản trị viên\nhệ thống" as SysAdmin
+
+rectangle "Asymptotic -- AI Agent Financial Gateway" {
+  usecase "UC07\nĐăng ký tổ chức" as UC07
+  usecase "UC08\nQuản lý đội ngũ và\nthành viên tổ chức" as UC08
+  usecase "UC02\nNạp tiền vào\nví tổ chức" as UC02
+  usecase "UC03\nQuản lý và phân bổ\nngân sách nội bộ" as UC03
+  usecase "UC04\nĐăng ký và quản lý\nAI Agent" as UC04
+  usecase "UC05\nQuản lý API key\ncủa Agent" as UC05
+  usecase "UC06\nTheo dõi giao dịch,\nusage, cost và trace" as UC06
+  usecase "UC01\nThực hiện yêu cầu AI\nqua Gateway" as UC01
+  usecase "UC09\nQuản lý provider, model\nvà chính sách giá" as UC09
+
+  UC07 -[hidden]down- UC08
+  UC08 -[hidden]down- UC02
+  UC02 -[hidden]down- UC03
+  UC03 -[hidden]down- UC04
+  UC04 -[hidden]down- UC05
+  UC05 -[hidden]down- UC06
+  UC06 -[hidden]down- UC01
+  UC01 -[hidden]down- UC09
+}
+
+actor "Nhà cung cấp dịch vụ\nthanh toán" as PaymentProvider
+actor "Nhà cung cấp\ndịch vụ AI" as AIProvider
+
+User -right- UC07
+
+OrgAdmin -right- UC02
+OrgAdmin -right- UC08
+OrgAdmin -right- UC03
+OrgAdmin -right- UC04
+OrgAdmin -right- UC05
+OrgAdmin -right- UC06
+
+Developer -right- UC03
+Developer -right- UC04
+Developer -right- UC05
+Developer -right- UC06
+
+Agent -right- UC01
+SysAdmin -right- UC09
+
+UC02 -right- PaymentProvider
+UC01 -right- AIProvider
+
+User -[hidden]down- OrgAdmin
+OrgAdmin -[hidden]down- Developer
+Developer -[hidden]down- Agent
+Agent -[hidden]down- SysAdmin
+
+PaymentProvider -[hidden]down- AIProvider
+
+@enduml

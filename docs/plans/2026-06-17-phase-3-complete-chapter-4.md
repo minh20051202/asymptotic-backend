@@ -1,266 +1,177 @@
-# Complete Chapter 4 Implementation Plan
+# Phase 3 -- Complete Chapter 4
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+Goal: hoàn thiện thiết kế hướng đối tượng: architecture, package, design class, sequence, state, data/API.
 
-**Goal:** Hoàn thiện Chương 4 về thiết kế hướng đối tượng: kiến trúc, package, design class, sequence, state, dữ liệu và API.
+Edit:
+- `report/chapter_4.tex`
+- `report/report_support_documentation/diagrams/chapter_4/package/**`
+- `report/report_support_documentation/diagrams/chapter_4/design_classes/**`
+- `report/report_support_documentation/diagrams/chapter_4/sequences/**`
+- `report/report_support_documentation/diagrams/chapter_4/states/**`
+- `report/report_support_documentation/diagrams/chapter_4/data_design/**`
 
-**Architecture:** Chương 4 là design-level, được phép đưa service, repository, adapter, handler và transaction boundary. Nội dung phải trace được từ Chương 2-3 và không mâu thuẫn với analysis model.
+Rules:
+- Chapter 4 = design-level.
+- Architecture = modular monolith.
+- Internal modules same process/deployment unit.
+- Internal calls in-process, not HTTP/RPC.
+- Repositories are persistence abstractions.
+- One shared physical Asymptotic DB.
+- No database-per-service.
+- External only: AI Provider, Payment Provider.
+- Data design follows: requirements -> use cases -> analysis Entity classes -> conceptual model -> logical ERD.
+- ERD stays DBMS-independent; no SQL, index, migration, partitioning, query tuning, or storage configuration.
+- Existing code/schema is validation input only, not design source.
 
-**Tech Stack:** LaTeX, PlantUML via `plantuml-skill`/Kroki for package, design class, sequence and state diagrams.
+Architecture prose:
+- Presentation/Application/Domain/Infrastructure layers.
+- Modular monolith fits MVP financial consistency.
+- Gateway is financial enforcement point.
+- Shared transaction boundary for reservation, settlement, ledger.
 
----
+Package diagram:
+- `package_diagram/diagram.puml`.
+- Packages: presentation, application, domain, infrastructure.
+- Domain modules: identity, agent, apikey, policy, ledger, provider, payment, reporting.
+- No deployment nodes/network protocols/separate DB.
 
-### Task 1: Architecture And Package Design
+Design class diagrams:
+1. `design_class_diagram/overview.puml`
+   - high-level handlers, services, repositories, adapters, domain entities.
+2. `design_class_diagram/gateway_request_flow.puml`
+   - GatewayHandler, AIRequestService, APIKeyService, IdempotencyService, PolicyService, BudgetReservationService, ProviderRouter, ProviderAdapter, SettlementService, TraceService.
+3. `design_class_diagram/finance_ledger.puml`
+   - WalletService, BudgetAllocationService, BudgetReservationService, TransactionService, LedgerService, PaymentService, repositories, Wallet, FinancialTransaction, LedgerEntry, PaymentTransaction.
 
-**Files:**
-- Modify: `report/chapter_4.tex`
-- Create: `report/report_support_documentation/package_diagram/diagram.puml`
-- Create: `report/report_support_documentation/package_diagram/diagram.png`
-- Read: `report/report_support_documentation/OOAD.md`
-- Read: `report/report_support_documentation/formal-17-12-05.pdf`
+Sequence diagrams:
+1. `sequence_diagrams/UC01/sequence.puml`
+   - Agent -> GatewayHandler -> AIRequestService.
+   - Auth, idempotency, policy, budget, reservation, provider call, settlement, trace, response.
+   - `alt`: invalid key, insufficient budget, provider error, idempotent replay.
+2. `sequence_diagrams/UC04_agent_registration/sequence.puml`
+   - Developer/Admin -> handler -> AgentApplicationService.
+   - Register external Agent.
+   - API key issuance only when UC05 step shown explicitly.
+   - One DB lifeline.
+3. `sequence_diagrams/finance_budget/sequence.puml`
+   - top-up, callback validation, wallet credit, ledger, budget allocation.
+   - atomic financial writes in transaction boundary.
 
-**Step 1: Complete architecture prose**
+Sequence architecture checks:
+- internal participants in same monolith;
+- repository lifelines `<<repository>>`, not database symbol;
+- exactly one physical DB lifeline: `Asymptotic Database` or `Shared Database`;
+- multiple repositories converge on shared DB;
+- AI Provider/Payment Provider only external network lifelines.
 
-Explain:
+State diagrams:
+1. `state_diagrams/ai_request_state.puml`
+   - Received, Authenticated, PolicyChecked, BudgetReserved, Routed, Completed, Rejected, Failed, PendingReconciliation.
+2. `state_diagrams/financial_transaction_state.puml`
+   - Pending, Reserved, Settled, Released, Failed, Reversed, PendingReconciliation.
 
-```text
-Presentation Layer
-Application Layer
-Domain Layer
-Infrastructure Layer
-Why modular monolith fits MVP financial consistency
-Why Gateway is financial enforcement point
-```
+Data design:
 
-**Step 2: Create package diagram using PlantUML**
+Research basis:
+- `report/research/database_design/database-design-re-erd-research-2026-06-18.md`.
+- `report/report_support_documentation/governance/project_source_of_truth.md`.
+- Canonical FR/NFR and UC01-UC09 in Chapter 2.
+- Use case specifications and activity diagrams.
+- Analysis Entity class diagrams in Chapter 3.
+
+Scope:
+- Design logical data model, not physical database implementation.
+- Show business entities, identifiers, essential attributes, relationships, cardinality, optionality, associative entities, and critical constraints.
+- Do not show controllers, services, repositories, DTOs, adapters, processing order, or deployment concerns.
+- State once that modules share one physical Asymptotic DB; keep logical module ownership for clarity.
 
 Create:
+1. `data_design/entity_derivation.md`
+   - Map each data entity to source FR/NFR, use case, analysis Entity class, and business rule.
+   - Record why entity needs persistence.
+   - Reject candidate classes that are actions, services, controls, adapters, or derived report views.
+2. `data_design/overview/diagram.puml`
+   - Optional sparse overview only.
+   - Show major aggregate groups and cross-group relationships.
+   - Omit detailed attributes when overview becomes dense.
+3. `data_design/organization_access/diagram.puml`
+   - Organization, Team, User, DeveloperProfile, OrganizationMembership, TeamMembership.
+   - Preserve membership/history where team or role changes require audit.
+4. `data_design/agent_api_key/diagram.puml`
+   - AIAgent, ApiKey, AgentStatusHistory.
+   - Agent belongs to organization and managed developer.
+   - API key belongs to Agent and preserves issue/revoke lifecycle.
+5. `data_design/finance_budget/diagram.puml`
+   - Wallet, BudgetLimit, BudgetAllocation, BudgetReservation, FinancialTransaction, LedgerEntry, PaymentTransaction.
+   - Organization wallet stores real money.
+   - Team, Developer, and Agent hold limits/allocations, not independent wallets.
+   - Reservation, settlement, release, reversal, and ledger records must remain traceable.
+6. `data_design/provider_catalog/diagram.puml`
+   - AIProvider, ProviderCredential, AIModel, ModelPricing, RoutingPolicy.
+   - Provider credentials remain internal to Gateway.
+   - Pricing records preserve validity period or version needed for historical cost interpretation.
+7. `data_design/request_trace/diagram.puml`
+   - AIRequest, IdempotencyRecord, RequestTrace, UsageRecord, CostRecord.
+   - Trace request to organization, team, developer, Agent, provider, model, and financial records.
+   - Same idempotency scope/key must not create duplicate successful financial effects.
 
-```text
-report/report_support_documentation/package_diagram/diagram.puml
-```
+Derivation steps:
+1. Extract persistent business nouns from canonical FR/NFR and UC specifications.
+2. Compare with Chapter 3 analysis Entity classes.
+3. Define entity identity and lifecycle.
+4. Define relationships, cardinality, optionality, and historical requirements.
+5. Introduce associative entities for many-to-many relations or relations carrying attributes/history.
+6. Define critical financial, security, ownership, idempotency, and traceability constraints.
+7. Split diagrams by business cluster; do not force all entities into one unreadable ERD.
+8. Cross-check against current schema/code only after logical model is coherent.
 
-Packages:
+Required business constraints:
+- One Organization owns one wallet in MVP.
+- Organization may contain many teams and members.
+- Budget path follows Organization -> Team -> Developer -> Agent.
+- Allocation at lower level cannot exceed available limit from parent level.
+- Agent must remain traceable to owning Organization and managing Developer.
+- API key authenticates only valid, active Agent context.
+- ProviderCredential never belongs to or becomes visible to Agent/Developer.
+- AI request is routed only after policy, quota, and all budget levels pass.
+- Idempotent replay cannot duplicate charge, reservation, settlement, or ledger effect.
+- Usage, cost, trace, transaction, and ledger records must preserve historical provider/model/pricing context.
 
-```text
-presentation, application, domain, infrastructure
-identity, agent, apikey, policy, ledger, provider, payment, reporting
-```
+Chapter 4 writing:
+- Introduce derivation from Chapter 2 requirements/use cases and Chapter 3 Entity classes.
+- Explain each ERD briefly: purpose, main entities, main relationships, critical constraints.
+- Put overview first only if readable; otherwise use textual introduction and detailed ERDs directly.
+- Caption every figure consistently and add `Nguồn: Tác giả xây dựng`.
+- Cite database-design theory at point of use; do not add uncited references.
 
-No circular dependencies. If too crowded, split by layers and domain packages.
+Data design review:
+- Every entity traces to at least one FR/NFR, use case, or analysis Entity class.
+- No service/control/adapter appears as data entity.
+- Every relationship has reviewed cardinality and optionality.
+- Many-to-many and historical relationships use suitable associative/history entities.
+- Wallet is not confused with Team/Developer/Agent limits.
+- Financial records support audit and reconciliation.
+- ERDs agree with sequence, state, design class, and API models.
+- Names match canonical terminology in `project_source_of_truth.md`.
+- Diagrams remain readable at report page size.
+- PlantUML sources and exports stay together.
 
-**Step 3: Render and embed**
+API design:
+- Agent request API.
+- Organization/admin API.
+- Agent management API.
+- API key management API.
+- Wallet/payment API.
+- Provider/catalog admin API.
+- Reporting API.
+- Payment callback API.
+- Provider credentials internal; never returned.
 
-Render via Kroki, validate `HTTP 200`, inspect PNG, then embed in `report/chapter_4.tex` with caption ending `Nguồn: Tác giả xây dựng`.
-
-### Task 2: Design Class Diagrams
-
-**Files:**
-- Modify: `report/chapter_4.tex`
-- Create: `report/report_support_documentation/design_class_diagram/overview.puml`
-- Create: `report/report_support_documentation/design_class_diagram/overview.png`
-- Create: `report/report_support_documentation/design_class_diagram/gateway_request_flow.puml`
-- Create: `report/report_support_documentation/design_class_diagram/gateway_request_flow.png`
-- Create: `report/report_support_documentation/design_class_diagram/finance_ledger.puml`
-- Create: `report/report_support_documentation/design_class_diagram/finance_ledger.png`
-
-**Step 1: Create overview design class diagram**
-
-Use service/repository/adapter level classes:
-
-```text
-GatewayHandler
-AdminHandler
-AIRequestService
-AgentService
-APIKeyService
-BudgetService
-PolicyService
-ProviderRoutingService
-SettlementService
-WalletService
-TransactionService
-TraceService
-ProviderAdapter
-PaymentAdapter
-Repository interfaces
-Domain entities
-```
-
-If too crowded, keep it high-level and rely on the two focused diagrams.
-
-**Step 2: Create Gateway Request Flow diagram**
-
-Focus UC01:
-
-```text
-GatewayHandler
-AIRequestService
-APIKeyService
-IdempotencyService
-PolicyService
-BudgetReservationService
-ProviderRouter
-ProviderAdapter
-SettlementService
-TraceService
-WalletRepository
-TransactionRepository
-```
-
-**Step 3: Create Finance/Ledger diagram**
-
-Focus:
-
-```text
-WalletService
-BudgetAllocationService
-BudgetReservationService
-TransactionService
-LedgerService
-PaymentService
-WalletRepository
-FinancialTransactionRepository
-LedgerEntryRepository
-Wallet
-FinancialTransaction
-LedgerEntry
-PaymentTransaction
-```
-
-**Step 4: Render and embed**
-
-Use `plantuml-skill` render loop. Embed all readable diagrams with captions.
-
-### Task 3: Sequence Diagrams
-
-**Files:**
-- Modify: `report/chapter_4.tex`
-- Create: `report/report_support_documentation/sequence_diagrams/UC01/sequence.puml`
-- Create: `report/report_support_documentation/sequence_diagrams/UC01/sequence.png`
-- Create: `report/report_support_documentation/sequence_diagrams/UC04_agent_registration/sequence.puml`
-- Create: `report/report_support_documentation/sequence_diagrams/UC04_agent_registration/sequence.png`
-- Create: `report/report_support_documentation/sequence_diagrams/finance_budget/sequence.puml`
-- Create: `report/report_support_documentation/sequence_diagrams/finance_budget/sequence.png`
-
-**Step 1: UC01 sequence**
-
-Show:
-
-```text
-AI Agent -> GatewayHandler -> AIRequestService
-API key authentication
-Idempotency check
-Policy/budget check
-Budget reservation
-Provider call using internal credential
-Usage metadata
-Settlement and trace
-Response
-```
-
-Include `alt` for invalid key, insufficient budget, provider error and idempotent replay.
-
-If too wide, split into:
-
-```text
-Phase 1: authenticate/idempotency/policy/budget
-Phase 2: provider call/streaming/settlement/trace
-```
-
-**Step 2: UC04 sequence**
-
-Show external Agent registration and API key issuance. Do not imply the system creates or hosts the Agent.
-
-**Step 3: Finance/budget sequence**
-
-Show top-up, payment callback validation, wallet credit and budget allocation.
-
-### Task 4: State Machine Diagrams
-
-**Files:**
-- Modify: `report/chapter_4.tex`
-- Create: `report/report_support_documentation/state_diagrams/ai_request_state.puml`
-- Create: `report/report_support_documentation/state_diagrams/ai_request_state.png`
-- Create: `report/report_support_documentation/state_diagrams/financial_transaction_state.puml`
-- Create: `report/report_support_documentation/state_diagrams/financial_transaction_state.png`
-
-**Step 1: AI request states**
-
-Use:
-
-```text
-Received, Authenticated, PolicyChecked, BudgetReserved, Routed, Completed, Rejected, Failed, PendingReconciliation
-```
-
-**Step 2: Financial transaction states**
-
-Use:
-
-```text
-Pending, Reserved, Settled, Released, Failed, Reversed, PendingReconciliation
-```
-
-**Step 3: Render and embed**
-
-Render via Kroki and embed under `\section{Thiết kế trạng thái}`.
-
-### Task 5: Data And API Design
-
-**Files:**
-- Modify: `report/chapter_4.tex`
-- Optional create: `report/report_support_documentation/api_design_summary.md`
-- Optional create: `report/report_support_documentation/data_design_summary.md`
-
-**Step 1: Write data design**
-
-Cover:
-
-```text
-Organization/User/Developer/Agent/APIKey
-Wallet/BudgetPolicy/FinancialTransaction/LedgerEntry/PaymentTransaction
-AIProvider/AIModel/PricingPolicy
-IdempotencyRecord/ExecutionTrace
-```
-
-**Step 2: Write API design**
-
-Describe endpoint groups:
-
-```text
-Agent request API
-Organization/admin API
-Agent/API key management API
-Wallet/payment API
-Provider/catalog admin API
-Reporting API
-Payment callback API
-```
-
-Clarify provider credentials are internal and never returned.
-
-### Task 6: Build And Commit Chapter 4
-
-**Files:**
-- Modify: `report/chapter_4.tex`
-- Create/modify: `report/report_support_documentation/package_diagram/**`
-- Create/modify: `report/report_support_documentation/design_class_diagram/**`
-- Create/modify: `report/report_support_documentation/sequence_diagrams/**`
-- Create/modify: `report/report_support_documentation/state_diagrams/**`
-
-**Step 1: Build**
+Build:
 
 ```bash
 cd report
 latexmk -pdf -g main.tex
 ```
 
-Expected: build succeeds.
-
-**Step 2: Commit**
-
-```bash
-git add report/chapter_4.tex report/report_support_documentation/package_diagram report/report_support_documentation/design_class_diagram report/report_support_documentation/sequence_diagrams report/report_support_documentation/state_diagrams report/main.pdf
-git commit -m "docs: complete chapter 4 object design"
-```
-
+Pass: diagrams readable, architecture not microservice, build succeeds.

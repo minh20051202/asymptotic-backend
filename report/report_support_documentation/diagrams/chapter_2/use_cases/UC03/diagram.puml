@@ -1,0 +1,33 @@
+@startuml
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+
+actor "Quản trị viên\ntổ chức" as OrgAdmin
+actor "Lập trình viên" as Developer
+
+rectangle "Quản lý và phân bổ ngân sách nội bộ" {
+  usecase "Xem ngân sách và\nhạn mức được quản lý" as ViewBudget
+  usecase "Phân bổ ngân sách\ncho đội ngũ" as AllocateTeam
+  usecase "Phân bổ hạn mức\ncho lập trình viên" as AllocateDeveloper
+  usecase "Phân bổ hạn mức\ncho AI Agent" as AllocateAgent
+  usecase "Thu hồi hạn mức\nchưa sử dụng" as RevokeBudget
+  usecase "Xem lịch sử\nđiều chuyển" as ViewHistory
+}
+
+OrgAdmin -- ViewBudget
+OrgAdmin -- AllocateTeam
+OrgAdmin -- AllocateDeveloper
+OrgAdmin -- RevokeBudget
+OrgAdmin -- ViewHistory
+
+Developer -- ViewBudget
+Developer -- AllocateAgent
+Developer -- RevokeBudget
+Developer -- ViewHistory
+@enduml

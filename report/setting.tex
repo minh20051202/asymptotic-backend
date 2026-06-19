@@ -103,8 +103,9 @@
 
 
 \usepackage{parskip}
-\setlength{\parskip}{5pt} 
-\setlength{\parindent}{1.25cm}
+\usepackage{indentfirst}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{0.6cm}
 
 \usepackage{listings}
 \lstset{
@@ -193,7 +194,7 @@
 }
 
 % Sử dụng gói lệnh minted để định dạng đoạn code
-\usepackage{minted}
+\usepackage[outputdir=build]{minted}
 
 % Định nghĩa một môi trường để chứa đoạn văn bản TOML
 \newenvironment{tomlcode}

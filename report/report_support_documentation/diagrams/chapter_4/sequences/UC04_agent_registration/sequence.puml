@@ -1,0 +1,46 @@
+@startuml
+!theme plain
+title Sequence UC04 - Đăng ký AI Agent bên ngoài
+
+autonumber
+skinparam shadowing false
+skinparam defaultFontName "Arial"
+
+actor "Lập trình viên" as Actor
+box "Asymptotic Modular Monolith" #F8FAFC
+participant "AdminHandler" as Handler
+participant "AgentApplicationService" as AgentService
+participant "OrganizationService" as OrganizationService
+participant "AgentRepository" as AgentRepo <<repository>>
+participant "MembershipRepository" as MembershipRepo <<repository>>
+end box
+database "Asymptotic Database" as DB
+
+Actor -> Handler: đăng ký AI Agent bên ngoài
+Handler -> AgentService: registerAgent(info, currentDeveloper)
+AgentService -> OrganizationService: kiểm tra quyền và quan hệ quản lý
+OrganizationService -> MembershipRepo: findDeveloperMembership()
+MembershipRepo -> DB: đọc organization, team, developer
+DB --> MembershipRepo: quan hệ hiện hành
+MembershipRepo --> OrganizationService: membership
+
+alt không có quyền hoặc developer không thuộc team hợp lệ
+  OrganizationService --> AgentService: từ chối
+  AgentService --> Handler: lỗi nghiệp vụ
+  Handler --> Actor: 403/422
+else hợp lệ
+  OrganizationService --> AgentService: organizationId + teamId
+  AgentService -> AgentRepo: tạo Agent ở trạng thái chưa kích hoạt
+  AgentRepo -> DB: lưu Agent và developer quản lý
+  DB --> AgentRepo: Agent đã tạo
+  AgentRepo --> AgentService: Agent
+  AgentService --> Handler: thông tin Agent
+  Handler --> Actor: đăng ký thành công
+end
+
+note over Actor,Handler
+UC04 chỉ đăng ký và quản lý vòng đời Agent.
+Hạn mức thuộc UC03; API key thuộc UC05.
+Gateway không tạo, huấn luyện hoặc vận hành Agent.
+end note
+@enduml
